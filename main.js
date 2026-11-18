@@ -28,7 +28,7 @@ const ui={
 };
 let hp=100,maxHp=100,mp=60,maxMp=60,xp=0,level=1,kills=0,wave=1,power=1,moveSpeed=3.2;
 let autoAttack=true,attackCooldown=0,skillCooldown=0,invuln=0,paused=false,gameEnded=false;
-const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,hit:0};
+const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,skillAnim:0,hit:0,moving:false};
 const enemies=[],particles=[],slashes=[],runes=[];
 const joy={x:0,y:0,active:false}; const keys={};
 let last=performance.now(),time=0,spawnTimer=0;
@@ -103,70 +103,75 @@ function drawAura(x,y,r,color,alpha=1){
  ctx.beginPath();ctx.ellipse(x,y,r*.88,r*.36,0,0,Math.PI*2);ctx.stroke();
  ctx.restore();
 }
-// The player is now rendered from the user's approved transparent original-card cutout.
-// The supplied source is low-resolution, so keep it crisp enough for mobile and avoid
-// drawing a second geometric body over it. The aura remains separate gameplay VFX.
-const halpasSprite = new Image();
-halpasSprite.src = "./halpas_original_cutout.png?v=final-4-1";
-let halpasSpriteReady = false;
-halpasSprite.onload = () => { halpasSpriteReady = true; };
-function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0){
+// FINAL 5.0: animated 4x4 sprite sheet. Rows: idle, walk, melee attack, Halpas burst.
+// The sheet is a newly-created 2D animation interpretation guided by the supplied
+// official appearance image and gameplay recording; it is not extracted game data.
+const halpasSheet = new Image();
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-5";
+let halpasSheetReady = false;
+halpasSheet.onload = () => { halpasSheetReady = true; };
+function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0){
  ctx.save();
  ctx.translate(x,y);
- const bob = Math.sin(phase*5.2)*1.2;
- const breath = 1 + Math.sin(phase*2.1)*.008;
- // Ground shadow and transformation ring sit beneath the original sprite.
+ const bob = moving ? Math.sin(phase*2.0)*1.5 : Math.sin(phase*2.4)*.8;
+ // Ground shadow and blue transformation ring remain separate from the sprite.
  ctx.save();
  ctx.globalAlpha=.38;
  ctx.shadowColor="#293fff"; ctx.shadowBlur=24;
  ellipse(0,9,35,11,"#202d88");
  ctx.restore();
  drawAura(0,9,35,"#536cff",.94);
- // Soft released-energy glow behind the card artwork, not a pair of wings.
- ctx.save();
- ctx.globalCompositeOperation="lighter";
- const glow=ctx.createRadialGradient(0,-82,5,0,-82,68);
- glow.addColorStop(0,"rgba(255,151,54,.12)");
- glow.addColorStop(.42,"rgba(155,65,255,.10)");
- glow.addColorStop(1,"rgba(70,40,190,0)");
- ellipse(0,-82,48,70,glow);
- ctx.restore();
- if(halpasSpriteReady){
-  const h=218*scale*breath;
-  const w=h*(halpasSprite.naturalWidth/halpasSprite.naturalHeight);
-  // Small attack movement only; keep the source illustration's silhouette intact.
-  const attackShift = attack>0 ? Math.sin((.24-attack)*Math.PI/.24)*2.5 : 0;
+
+ if(halpasSheetReady){
+  const cols=4, rows=4, cellW=halpasSheet.naturalWidth/cols, cellH=halpasSheet.naturalHeight/rows;
+  let row=0, frame=0;
+  if(skill>0){
+   row=3; frame=clamp(Math.floor((1-skill)*4.2),0,3);
+  } else if(attack>0){
+   row=2; frame=clamp(Math.floor((1-attack/.46)*4),0,3);
+  } else if(moving){
+   row=1; frame=Math.floor(phase*9)%4;
+  } else {
+   row=0; frame=Math.floor(phase*2.8)%4;
+  }
+  const sx=frame*cellW, sy=row*cellH;
+  // Fixed frame box keeps the feet planted on the blue ring while each pose changes.
+  const h=194*scale, w=h*(cellW/cellH);
+  const attackNudge=attack>0?Math.sin((.46-attack)*Math.PI/.46)*2.2:0;
   ctx.save();
-  ctx.translate(attackShift,-bob);
-  if(hit>0){ctx.globalAlpha=.78;ctx.filter="brightness(1.35) saturate(1.2)";}
-  ctx.drawImage(halpasSprite,-w/2,-h+8,w,h);
+  ctx.translate(attackNudge,-bob);
+  if(hit>0){ctx.globalAlpha=.78;ctx.filter="brightness(1.3) saturate(1.15)";}
+  ctx.drawImage(halpasSheet,sx,sy,cellW,cellH,-w/2,-h+8,w,h);
   ctx.restore();
  } else {
-  // Brief loading fallback: a simple glowing silhouette while the PNG loads.
-  ctx.save();ctx.globalAlpha=.65;ctx.fillStyle="#241b35";
-  ellipse(0,-76,24,52,"#241b35","#dca34d",2);
-  ctx.restore();
+  // Loading fallback while the sprite sheet is fetched.
+  ctx.save();ctx.globalAlpha=.65;ellipse(0,-76,24,52,"#241b35","#dca34d",2);ctx.restore();
  }
- // Keep the established blue ring and a few sparks visible around the sprite.
+ // Small sparks orbit the character without hiding the animated silhouette.
  ctx.save();ctx.globalCompositeOperation="lighter";
- for(let i=0;i<7;i++){
-  const a=phase*1.25+i*.91;
-  const sx=Math.cos(a)*(34+(i%3)*5), sy=-70+Math.sin(a)*42;
-  ctx.globalAlpha=.22+.22*Math.sin(phase*3+i);
+ for(let i=0;i<5;i++){
+  const a=phase*1.25+i*1.18;
+  const sx=Math.cos(a)*(31+(i%3)*4), sy=-67+Math.sin(a)*37;
+  ctx.globalAlpha=.16+.18*Math.sin(phase*3+i);
   ctx.fillStyle=i%2?"#ffad48":"#bd79ff";
-  ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=8;
-  ellipse(sx,sy,1.3,1.8,ctx.fillStyle);
+  ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=7;
+  ellipse(sx,sy,1.2,1.6,ctx.fillStyle);
  }
  ctx.restore();
  if(attack>.05){
-  ctx.save();ctx.globalAlpha=.32+attack*.25;ctx.strokeStyle="#c18aff";
-  ctx.shadowColor="#b24dff";ctx.shadowBlur=17;ctx.lineWidth=3;
-  ctx.beginPath();ctx.arc(16,-100,58,-1.0,.4);ctx.stroke();ctx.restore();
+  ctx.save();ctx.globalAlpha=.28+attack*.18;ctx.strokeStyle="#c18aff";
+  ctx.shadowColor="#b24dff";ctx.shadowBlur=14;ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(16,-94,49,-1.0,.4);ctx.stroke();ctx.restore();
+ }
+ if(skill>0){
+  ctx.save();ctx.globalAlpha=.18+skill*.22;ctx.strokeStyle="#c58bff";
+  ctx.shadowColor="#b24dff";ctx.shadowBlur=22;ctx.lineWidth=4;
+  ctx.beginPath();ctx.ellipse(0,-84,47+Math.sin(time*18)*5,64+Math.sin(time*18)*7,0,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
  if(hit>0){
-  ctx.save();ctx.globalAlpha=clamp(hit/.2,0,1)*.65;ctx.strokeStyle="#ff5268";
-  ctx.shadowColor="#ff334f";ctx.shadowBlur=16;ctx.lineWidth=2.2;
-  ctx.beginPath();ctx.ellipse(0,-98,45,94,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+  ctx.save();ctx.globalAlpha=clamp(hit/.2,0,1)*.55;ctx.strokeStyle="#ff5268";
+  ctx.shadowColor="#ff334f";ctx.shadowBlur=14;ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(0,-92,38,76,0,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
  ctx.restore();
 }
@@ -215,7 +220,7 @@ function nearestEnemy(){
 }
 function attack(){
  if(gameEnded||paused||attackCooldown>0)return;
- attackCooldown=.52;player.attack=.24;
+ attackCooldown=.56;player.attack=.46;
  const e=nearestEnemy();
  if(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.6){
   damageEnemy(e,23*power);
@@ -225,7 +230,7 @@ function attack(){
 }
 function castSkill(){
  if(gameEnded||paused||skillCooldown>0||mp<25)return;
- mp-=25;skillCooldown=5;
+ mp-=25;skillCooldown=5;player.skillAnim=1.0;player.attack=0;
  runes.push({x:player.x,y:player.y,r:.3,life:.9,max:.9});
  addBurst(player.x,player.y,"#b77aff",50,1.8);
  addBurst(player.x,player.y,"#ffb0dc",28,1.3);
@@ -267,7 +272,7 @@ function draw(){
  const actors=enemies.map(e=>({y:e.x+e.y,draw:()=>drawEnemy(e)}));
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
-  drawHalpas(p.x,p.y,0.82,player.walk+time,player.faceX,player.faceY,player.attack>0?1:0,player.hit);
+  drawHalpas(p.x,p.y,1,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 
@@ -290,11 +295,12 @@ function tick(now){
  const dt=Math.min((now-last)/1000,.04);last=now;time+=dt;
  if(!paused&&!gameEnded){
   attackCooldown=Math.max(0,attackCooldown-dt);skillCooldown=Math.max(0,skillCooldown-dt);invuln=Math.max(0,invuln-dt);
-  player.attack=Math.max(0,player.attack-dt);player.hit=Math.max(0,player.hit-dt);mp=Math.min(maxMp,mp+dt*2.1);
+  player.attack=Math.max(0,player.attack-dt);player.skillAnim=Math.max(0,player.skillAnim-dt);player.hit=Math.max(0,player.hit-dt);mp=Math.min(maxMp,mp+dt*2.1);
   let dx=joy.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
   let dy=joy.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   const len=Math.hypot(dx,dy);if(len>1){dx/=len;dy/=len;}
-  if(Math.abs(dx)+Math.abs(dy)>.05){
+  player.moving=Math.abs(dx)+Math.abs(dy)>.05;
+  if(player.moving){
    player.x+=dx*moveSpeed*dt;player.y+=dy*moveSpeed*dt;player.walk+=dt*8;
    player.faceX=dx;player.faceY=dy;
   } else player.walk+=dt*1.5;

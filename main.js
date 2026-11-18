@@ -28,7 +28,7 @@ const ui={
 };
 let hp=100,maxHp=100,mp=60,maxMp=60,xp=0,level=1,kills=0,wave=1,power=1,moveSpeed=3.2;
 let autoAttack=true,attackCooldown=0,skillCooldown=0,invuln=0,paused=false,gameEnded=false;
-const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false};
+const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false,deadAt:0};
 let screenShake=0;
 const enemies=[],particles=[],slashes=[],runes=[];
 const joy={x:0,y:0,active:false}; const keys={};
@@ -108,10 +108,10 @@ function drawAura(x,y,r,color,alpha=1){
 // The sheet is a newly-created 2D animation interpretation guided by the supplied
 // official appearance image and gameplay recording; it is not extracted game data.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-5-1";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-5-2";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
-function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0){
+function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0,dead=0){
  ctx.save();
  ctx.translate(x,y);
  const bob = moving ? Math.abs(Math.sin(phase*4.25))*2.4 : Math.sin(phase*2.7)*1.15;
@@ -149,9 +149,22 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
   const attackProgress=attack>0?1-attack/.68:0;
   const attackNudge=attack>0?Math.sin(attackProgress*Math.PI)*5.2:0;
   ctx.save();
-  ctx.translate(attackNudge,-bob);
+  ctx.translate(attackNudge,-bob+dead*17);
+  ctx.rotate(dead*.24);
+  ctx.globalAlpha*=1-dead*.52;
   if(hit>0){ctx.globalAlpha=.78;ctx.filter="brightness(1.3) saturate(1.15)";}
+  // Draw the cape-side slice with a small independent flutter; the torso and
+  // weapon remain steady, creating a separate cape-motion layer on mobile.
+  const capeWidth=w*.43;
+  const capeShift=Math.sin(phase*5.4+(moving?1.1:0))*((moving?3.2:1.9)*scale);
+  ctx.save();
+  ctx.beginPath();ctx.rect(-w/2-5,-h+4,capeWidth+7,h+8);ctx.clip();
+  ctx.drawImage(halpasSheet,sx,sy,cellW,cellH,-w/2+capeShift,-h+8,w,h);
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();ctx.rect(-w/2+capeWidth,-h+4,w-capeWidth+6,h+8);ctx.clip();
   ctx.drawImage(halpasSheet,sx,sy,cellW,cellH,-w/2,-h+8,w,h);
+  ctx.restore();
   ctx.restore();
  } else {
   // Loading fallback while the sprite sheet is fetched.
@@ -275,7 +288,7 @@ joyEl.addEventListener("pointerup",resetJoy);joyEl.addEventListener("pointercanc
 addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if(e.key===" "){e.preventDefault();attack();}if(e.key.toLowerCase()==="q")castSkill();});
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 document.querySelector("#restartBtn").addEventListener("click",()=>location.reload());
-function endGame(){gameEnded=true;ui.gameOver.classList.remove("hidden");document.querySelector("#finalStats").textContent=`等級 ${level} · 擊殺 ${kills} 隻怪物 · 抵擋 ${wave} 波`;}
+function endGame(){gameEnded=true;screenShake=0;player.deadAt=time;player.attack=0;player.skillAnim=0;ui.gameOver.classList.remove("hidden");document.querySelector("#finalStats").textContent=`等級 ${level} · 擊殺 ${kills} 隻怪物 · 抵擋 ${wave} 波`;}
 
 function draw(){
  ctx.save();
@@ -288,7 +301,8 @@ function draw(){
  const actors=enemies.map(e=>({y:e.x+e.y,draw:()=>drawEnemy(e)}));
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
-  drawHalpas(p.x,p.y,1,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim);
+  const dead=player.deadAt>0?clamp((time-player.deadAt)/1.05,0,1):0;
+  drawHalpas(p.x,p.y,1,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim,dead);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 
@@ -296,7 +310,17 @@ function draw(){
  for(const r of runes){
   const p=screenPos(r.x,r.y);const q=1-r.life/r.max;
   ctx.save();ctx.globalAlpha=1-q;ctx.strokeStyle="#bd78ff";ctx.shadowColor="#a64dff";ctx.shadowBlur=18;ctx.lineWidth=3;
-  ctx.beginPath();ctx.ellipse(p.x,p.y,24+q*135,(24+q*135)*.42,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+  const rr=24+q*135, ry=rr*.42;
+  ctx.beginPath();ctx.ellipse(p.x,p.y,rr,ry,0,0,Math.PI*2);ctx.stroke();
+  ctx.globalAlpha=(1-q)*.78;ctx.lineWidth=1.4;ctx.strokeStyle="#f0c8ff";
+  ctx.beginPath();ctx.ellipse(p.x,p.y,rr*.78,ry*.78,0,0,Math.PI*2);ctx.stroke();
+  for(let k=0;k<12;k++){
+   const a=(k/12)*Math.PI*2+time*.45;
+   const x1=p.x+Math.cos(a)*rr*.82,y1=p.y+Math.sin(a)*ry*.82;
+   const x2=p.x+Math.cos(a)*rr*.98,y2=p.y+Math.sin(a)*ry*.98;
+   ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  }
+  ctx.restore();
  }
  for(const s of slashes){
   const p=screenPos(s.x,s.y);ctx.save();ctx.globalAlpha=s.life/s.max;ctx.strokeStyle="#d6b5ff";ctx.lineWidth=5;ctx.shadowColor="#7d65ff";ctx.shadowBlur=14;
@@ -319,12 +343,14 @@ function tick(now){
     const target=player.attackTarget;
     if(target&&enemies.includes(target)&&Math.hypot(target.x-player.x,target.y-player.y)<3.25){
      damageEnemy(target,23*power);
-     slashes.push({x:target.x,y:target.y,life:.24,max:.24});
-     addBurst(target.x,target.y,"#bd8cff",12,.9);
+     slashes.push({x:target.x,y:target.y,life:.30,max:.30});
+     slashes.push({x:target.x+.18,y:target.y-.12,life:.20,max:.20,offset:12});
+     addBurst(target.x,target.y,"#bd8cff",16,1.0);
     } else {
      const hx=player.x+player.faceX*.9,hy=player.y+player.faceY*.9;
      addBurst(hx,hy,"#8d83ff",11,.75);
-     slashes.push({x:hx,y:hy,life:.20,max:.20});
+     slashes.push({x:hx,y:hy,life:.24,max:.24});
+     slashes.push({x:hx-.12,y:hy+.16,life:.16,max:.16,offset:10});
     }
    }
   }
@@ -338,11 +364,11 @@ function tick(now){
    player.faceX=dx;player.faceY=dy;
   } else player.walk+=dt*1.5;
   player.x=clamp(player.x,-30,30);player.y=clamp(player.y,-30,30);
-  if(autoAttack&&attackCooldown<=0){const e=nearestEnemy();if(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.55)attack();}
+  if(autoAttack&&attackCooldown<=0){const e=nearestEnemy();if(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.75)attack();}
   for(const e of [...enemies]){
    const dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;
-   if(d>.72){e.x+=dx/d*e.speed*dt;e.y+=dy/d*e.speed*dt;}
-   else if(e.attack<=0){e.attack=1.05;if(invuln<=0){hp-=7;invuln=.48;player.hit=.2;addBurst(player.x,player.y,"#ff4e68",7,.6);if(hp<=0){hp=0;endGame();}}}
+   if(d>1.12){e.x+=dx/d*e.speed*dt;e.y+=dy/d*e.speed*dt;}
+   else if(e.attack<=0){e.attack=1.05;if(invuln<=0){hp-=7;invuln=.48;player.hit=.26;player.walk+=.8;screenShake=Math.max(screenShake,.10);addBurst(player.x,player.y,"#ff4e68",10,.7);if(hp<=0){hp=0;endGame();}}}
    e.attack=Math.max(0,e.attack-dt);
   }
   spawnTimer+=dt;if(enemies.length<6&&spawnTimer>1.4){spawnEnemy();spawnTimer=0;}

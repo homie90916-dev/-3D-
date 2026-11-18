@@ -1,28 +1,14 @@
-解放的哈爾巴斯 FINAL 6.1
+解放的哈爾巴斯 FINAL 7.0
 
-以 FINAL 6.0 為基礎，根據 2026-11-19 使用者提供的 iPhone Safari 實機錄影，調整角色跑步節奏。
+完整檔案：
+- index.html：遊戲入口
+- style.css：iPhone Safari 介面樣式
+- main.js：遊戲、戰鬥、八方向角色動畫控制
+- halpas_animated_sprites.png：原有待機／攻擊／爆炎動畫
+- halpas_directional_run.png：新增八方向跑步逐格動畫（4 欄 x 8 列）
+- halpas_original_cutout.png：官方宣傳圖去背參考素材
 
-本版重點：
-- 修正跑步動畫影格切換過快、上下晃動頻率過高造成的小碎步感。
-- 四影格跑步循環調整為約每秒 1.75 個完整步態循環。
-- 增加交替重心位移、跑步前傾、輕微身體伸縮與更明顯披風拖曳。
-- 地面藍色定位光環及陰影保持固定，不隨角色跳動。
-- 保留八方向移動輸入、面向變化、手動方向攻擊、自動鎖定攻擊、揮擊特效方向。
-- 保留怪物追擊、HP/MP/EXP、升級、爆炎技能、手機虛擬搖桿、PC 鍵盤操作。
+更新方式：將本資料夾內所有檔案上傳 GitHub Pages 儲存庫根目錄，覆蓋同名檔案。
+Commit 後等待 GitHub Actions 綠色勾勾，再用 Safari 開啟網站並重新整理。
 
-角色素材限制：
-目前角色仍使用四影格 2D 動畫圖集。這版改進跑步節奏及動作幅度，但不等於官方原生八方向骨架動畫。要達到真正天堂 M 的 8 方向身體轉向及自然步態，仍需有角色各方向的獨立跑步序列或可綁定骨架的 3D 模型。
-
-檔案：
-index.html
-main.js
-style.css
-halpas_animated_sprites.png
-halpas_original_cutout.png
-README.txt
-
-部署：
-解壓縮後，把六個檔案上傳至 GitHub 儲存庫根目錄並覆蓋同名檔案，Commit changes，等待 Pages 部署成功。
-
-測試網址：
-https://homie90916-dev.github.io/-3D-/?v=final-6-1
+注意：新跑步素材為依照提供之外觀參考重新繪製的原創動畫，不是天堂 M 原始遊戲資產。

@@ -28,7 +28,7 @@ const ui={
 };
 let hp=100,maxHp=100,mp=60,maxMp=60,xp=0,level=1,kills=0,wave=1,power=1,moveSpeed=3.2;
 let autoAttack=true,attackCooldown=0,skillCooldown=0,invuln=0,paused=false,gameEnded=false;
-const player={x:0,y:0,faceX:.7071,faceY:.7071,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false,deadAt:0};
+const player={x:0,y:0,faceX:.7071,faceY:.7071,facingSector:2,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false,deadAt:0};
 let screenShake=0;
 const enemies=[],particles=[],slashes=[],runes=[],damageTexts=[];
 const joy={x:0,y:0,active:false}; const keys={};
@@ -104,118 +104,172 @@ function drawAura(x,y,r,color,alpha=1){
  ctx.beginPath();ctx.ellipse(x,y,r*.88,r*.36,0,0,Math.PI*2);ctx.stroke();
  ctx.restore();
 }
-// FINAL 5.0: animated 4x4 sprite sheet. Rows: idle, walk, melee attack, Halpas burst.
-// The sheet is a newly-created 2D animation interpretation guided by the supplied
-// official appearance image and gameplay recording; it is not extracted game data.
+// FINAL 7.0: hybrid directional animation system.
+// - Existing 4x4 sheet supplies idle/attack/skill poses and the original appearance.
+// - New 4x8 sheet supplies eight genuinely different running views.
+// - Canvas transforms add body-weight, lean and foot timing while the ground aura stays planted.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-6-1";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-7-0";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
+const halpasRunSheet = new Image();
+halpasRunSheet.src = "./halpas_directional_run.png?v=final-7-0";
+let halpasRunReady = false;
+halpasRunSheet.onload = () => { halpasRunReady = true; };
+
+// Screen-space octants, clockwise from screen-right. The generated atlas rows
+// are ordered front, front-right, right, back-right, back, back-left, left, front-left.
+const RUN_ROW_FOR_SECTOR = [2,1,0,7,6,5,4,3];
+function sectorFromWorldDirection(x,y){
+ const d=iso(x,y);
+ const a=Math.atan2(d.y,d.x);
+ return ((Math.round(a/(Math.PI/4))%8)+8)%8;
+}
+function setFacing(x,y){
+ const l=Math.hypot(x,y)||1;
+ player.faceX=x/l; player.faceY=y/l;
+ player.facingSector=sectorFromWorldDirection(player.faceX,player.faceY);
+}
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0,dead=0){
  ctx.save();
  ctx.translate(x,y);
- // Slower, fuller stride: the previous frame cadence and bounce were too fast,
- // making the armored character look like it was shuffling in place.
- const gait = phase * .78;
- const bob = moving ? Math.abs(Math.sin(phase*1.22))*4.8 : Math.sin(phase*1.25)*1.05;
- const runSway = moving ? Math.sin(phase*1.22)*3.8 : 0;
- const runLean = moving ? -.085 : 0;
- const runStretch = moving ? 1 + Math.sin(phase*1.22)*.018 : 1;
- // Ground shadow and blue transformation ring remain separate from the sprite.
+ const sector=player.facingSector;
+ const runRow=RUN_ROW_FOR_SECTOR[sector]??0;
+ // The new atlas contains full, broad strides; 6 frames/sec gives a deliberate
+ // armored run cadence instead of the old rapid shuffle.
+ const runFrame=moving?Math.floor(phase*.75)%4:0;
+ const idleFrame=0;
+ const attackProgress=attack>0?clamp(1-attack/.68,0,1):0;
+ const skillProgress=skill>0?clamp(1-skill/1.12,0,1):0;
+ const runBob=moving?([0,1.6,0,-1.6][runFrame]):Math.sin(time*1.7)*.85;
+ const strideLean=moving?([-.045,.015,.045,-.015][runFrame]):0;
+ const bodySway=moving?Math.sin(phase*.38)*.018:Math.sin(time*.8)*.006;
+ const hitFlash=hit>0;
+
+ // The aura/shadow is rendered independently from the character rig and remains
+ // locked to the ground plane (no vertical bounce).
  ctx.save();
- ctx.globalAlpha=.38;
- ctx.shadowColor="#293fff"; ctx.shadowBlur=24;
- ellipse(0,9,35,11,"#202d88");
- ctx.restore();
+ ctx.globalAlpha=.42;ctx.shadowColor="#293fff";ctx.shadowBlur=24;
+ ellipse(0,9,35,11,"#202d88");ctx.restore();
  drawAura(0,9,38,"#536cff",.94);
 
- if(halpasSheetReady){
-  const cols=4, rows=4, cellW=halpasSheet.naturalWidth/cols, cellH=halpasSheet.naturalHeight/rows;
-  let row=0, frame=0;
-  if(skill>0){
-   // Burst: gather energy -> spiral -> detonation -> trailing embers.
-   const progress=1-skill;
-   row=3;
-   frame=progress<.18?0:progress<.40?1:progress<.74?2:3;
-  } else if(attack>0){
-   // Melee: wind-up -> raise weapon -> impact slash -> recovery.
-   const progress=1-attack/.68;
-   row=2;
-   frame=progress<.20?0:progress<.44?1:progress<.72?2:3;
-  } else if(moving){
-   // Four-frame run cycle: about 1.75 complete strides per second.
-   row=1; frame=Math.floor(gait)%4;
-  } else {
-   // Slow idle loop so the armor and cape do not look frozen.
-   row=0; frame=Math.floor(phase*3.2)%4;
-  }
-  const sx=frame*cellW, sy=row*cellH;
-  // Fixed frame box keeps the feet planted on the blue ring while each pose changes.
-  const h=210*scale, w=h*(cellW/cellH);
-  const attackProgress=attack>0?1-attack/.68:0;
-  const attackNudge=attack>0?Math.sin(attackProgress*Math.PI)*5.2:0;
-  // Convert the world-facing vector into the isometric screen direction.
-  // Eight sectors are tracked; the available character artwork is mirrored and
-  // gently foreshortened to suggest the turn without pretending to be 8 unique models.
+ const drawFrame=(img,cols,rows,col,row,drawW,drawH,dy)=>{
+  const cw=img.naturalWidth/cols,ch=img.naturalHeight/rows;
+  ctx.drawImage(img,col*cw,row*ch,cw,ch,-drawW/2,-drawH+8+dy,drawW,drawH);
+ };
+ const runCellW=halpasRunReady?halpasRunSheet.naturalWidth/4:0;
+ const runCellH=halpasRunReady?halpasRunSheet.naturalHeight/8:0;
+ const oldCellW=halpasSheetReady?halpasSheet.naturalWidth/4:0;
+ const oldCellH=halpasSheetReady?halpasSheet.naturalHeight/4:0;
+ const cellRatio=halpasRunReady?runCellW/runCellH:(halpasSheetReady?oldCellW/oldCellH:1);
+ const h=218*scale,w=h*cellRatio;
+
+ ctx.save();
+ ctx.translate(0,-runBob+dead*17);
+ ctx.rotate(dead*.24+strideLean+bodySway);
+ ctx.scale(1,1+(moving?Math.sin(phase*.75)*.012:0));
+ ctx.globalAlpha*=1-dead*.52;
+ if(hitFlash){ctx.globalAlpha=.82;ctx.filter="brightness(1.32) saturate(1.12)";}
+
+ if(skill>0 && halpasSheetReady){
+  // Original burst animation remains intact.
+  const frame=skillProgress<.18?0:skillProgress<.40?1:skillProgress<.74?2:3;
+  drawFrame(halpasSheet,4,4,frame,3,h,h,0);
+ } else if(attack>0 && halpasRunReady){
+  // Keep the correct eight-direction body view; the sword arm is a separate
+  // 2D joint rig animated over this directional base pose.
+  drawFrame(halpasRunSheet,4,8,0,runRow,w,h,0);
+ } else if(attack>0 && halpasSheetReady){
+  const frame=attackProgress<.20?0:attackProgress<.44?1:attackProgress<.72?2:3;
   const screenFacing=iso(faceX,faceY);
-  const facingAngle=Math.atan2(screenFacing.y,screenFacing.x);
-  const facingSector=((Math.round(facingAngle/(Math.PI/4))%8)+8)%8;
-  const facingLeft=screenFacing.x<-.18;
-  const facingAway=screenFacing.y<-.30;
-  const facingToward=screenFacing.y>.30;
-  const facingScaleX=facingAway?.86:(facingToward?1.035:.93);
-  const facingScaleY=facingAway?.97:(facingToward?1.015:1);
-  const facingTilt=clamp(Math.sin(facingAngle)*.055,-.055,.055);
-  const strideOffsets = [-3.0, 1.8, 3.0, -1.8];
-  const strideX = moving ? strideOffsets[frame] : 0;
-  const strideTilt = moving ? [-.035,.025,.035,-.025][frame] : 0;
-  ctx.save();
-  ctx.translate(attackNudge+runSway+strideX,-bob+dead*17);
-  ctx.rotate(dead*.24+facingTilt+runLean+strideTilt);
-  ctx.scale((facingLeft?-1:1)*facingScaleX*(moving?1.012:1),facingScaleY*runStretch);
-  ctx.globalAlpha*=1-dead*.52;
-  if(hit>0){ctx.globalAlpha=.78;ctx.filter="brightness(1.3) saturate(1.15)";}
-  // Draw the cape-side slice with a small independent flutter; the torso and
-  // weapon remain steady, creating a separate cape-motion layer on mobile.
-  const capeWidth=w*.43;
-  const capeShift=Math.sin(phase*(moving?1.75:1.05)+(moving?1.1:0))*((moving?8.2:2.0)*scale);
-  ctx.save();
-  ctx.beginPath();ctx.rect(-w/2-5,-h+4,capeWidth+7,h+8);ctx.clip();
-  ctx.drawImage(halpasSheet,sx,sy,cellW,cellH,-w/2+capeShift,-h+8,w,h);
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();ctx.rect(-w/2+capeWidth,-h+4,w-capeWidth+6,h+8);ctx.clip();
-  ctx.drawImage(halpasSheet,sx,sy,cellW,cellH,-w/2,-h+8,w,h);
-  ctx.restore();
-  ctx.restore();
+  ctx.save();if(screenFacing.x<-.18)ctx.scale(-1,1);
+  drawFrame(halpasSheet,4,4,frame,2,h,h,0);ctx.restore();
+ } else if(halpasRunReady){
+  // Direction-specific running frames. When stationary, frame zero is held and
+  // a very small breathing/sway transform creates a living idle silhouette.
+  drawFrame(halpasRunSheet,4,8,moving?runFrame:idleFrame,runRow,w,h,0);
+ } else if(halpasSheetReady){
+  // Network/loading fallback: keep the prior sprite available.
+  const frame=moving?Math.floor(phase*.75)%4:Math.floor(time*1.65)%4;
+  drawFrame(halpasSheet,4,4,frame,moving?1:0,h,h,0);
  } else {
-  // Loading fallback while the sprite sheet is fetched.
   ctx.save();ctx.globalAlpha=.65;ellipse(0,-76,24,52,"#241b35","#dca34d",2);ctx.restore();
  }
- // Light foot puffs reinforce weight and forward motion without moving the ground ring.
- if(moving && skill<=0 && attack<=0){
-  const dustPulse=(Math.sin(phase*1.22)+1)*.5;
-  ctx.save();ctx.globalAlpha=.12+.10*dustPulse;
-  ctx.fillStyle="#a99aff";ctx.shadowColor="#8d7bff";ctx.shadowBlur=8;
-  ellipse(-11-runSway*.35,5,4+2*dustPulse,1.8,"rgba(164,145,255,.24)");
-  ellipse(10+runSway*.35,6,3+2*(1-dustPulse),1.5,"rgba(164,145,255,.20)");
+ ctx.restore();
+
+ // 2D skeletal weapon rig: shoulder -> forearm -> hand -> greatsword pivot.
+ // This is animated independently from the directional body frames.
+ if(attack>0){
+  const facing=iso(faceX,faceY),facingAngle=Math.atan2(facing.y,facing.x);
+  const side=facing.x<-.18?-1:1;
+  const swing=attackProgress<.24?-.95+(attackProgress/.24)*.22:
+              attackProgress<.66?-.73+((attackProgress-.24)/.42)*2.18:
+              1.45-((attackProgress-.66)/.34)*.72;
+  ctx.save();ctx.scale(scale,scale);
+  const shoulderX=side*17, shoulderY=-127;
+  ctx.translate(shoulderX,shoulderY);
+  // Upper arm and forearm are drawn as linked articulated segments.
+  ctx.lineCap="round";ctx.lineJoin="round";
+  ctx.strokeStyle="#20172a";ctx.lineWidth=12;
+  ctx.beginPath();ctx.moveTo(-side*4,-2);ctx.lineTo(side*7,13);ctx.stroke();
+  ctx.strokeStyle="#d99b35";ctx.lineWidth=2.2;
+  ctx.beginPath();ctx.moveTo(-side*4,-2);ctx.lineTo(side*7,13);ctx.stroke();
+  ctx.fillStyle="#171320";ctx.strokeStyle="#f4bd58";ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(side*1,7,13,15,3);ctx.fill();ctx.stroke();
+  // Hand pivot and blade rotate toward the last movement/attack direction.
+  ctx.translate(side*8,18);ctx.rotate(facingAngle+Math.PI/2+swing);
+  ctx.save();ctx.shadowColor="#9d55ff";ctx.shadowBlur=17;
+  const blade=ctx.createLinearGradient(-7,0,7,-66);
+  blade.addColorStop(0,"#44217f");blade.addColorStop(.48,"#bd8bff");blade.addColorStop(1,"#f2ddff");
+  path([[-5,-5],[-7,-17],[-3,-58],[0,-72],[4,-57],[7,-17],[5,-5]],blade,"#e4c5ff",1.5);
+  ctx.restore();
+  // Gold crossguard, grip and pommel.
+  path([[-15,-7],[15,-7],[12,-2],[-12,-2]],"#d99a35","#ffe29a",1.2);
+  roundedRect(-2,-1,4,14,1,"#4c2a24","#dca34b",1);
+  ellipse(0,14,4,4,"#e9ad45","#fff0b2",1);
+  // Directional arc follows the same facing vector as the blade.
+  ctx.save();ctx.rotate(-swing*.45);ctx.globalAlpha=.25+.48*Math.sin(attackProgress*Math.PI);
+  ctx.strokeStyle="#d9b4ff";ctx.shadowColor="#9c5aff";ctx.shadowBlur=17;ctx.lineWidth=5;
+  ctx.beginPath();ctx.arc(0,-24,67,-1.05,.72);ctx.stroke();ctx.restore();
   ctx.restore();
  }
- // Small sparks orbit the character without hiding the animated silhouette.
+
+ // Rig-style motion accents: the cape and weight are emphasized during a run.
+ // The cape's large folds are animated in the authored frame sequence; this
+ // subtle trailing ribbon is an additional independent motion layer.
+ if(moving && skill<=0 && attack<=0){
+  const flutter=Math.sin(phase*.75)*5.2;
+  ctx.save();ctx.globalAlpha=.16;ctx.lineWidth=2.2;ctx.strokeStyle="#e14b73";
+  ctx.shadowColor="#d82b63";ctx.shadowBlur=8;
+  ctx.beginPath();ctx.moveTo(-15,-125);ctx.quadraticCurveTo(-30-flutter,-88,-23-flutter,-48);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-11,-116);ctx.quadraticCurveTo(-23-flutter,-78,-16-flutter,-43);ctx.stroke();
+  ctx.restore();
+ }
+
+ // Dust puffs reinforce the weight of the boots without moving the ground ring.
+ if(moving && skill<=0 && attack<=0){
+  const pulse=(Math.sin(phase*.75*Math.PI*2)+1)*.5;
+  ctx.save();ctx.globalAlpha=.10+.09*pulse;ctx.fillStyle="#a99aff";
+  ctx.shadowColor="#8d7bff";ctx.shadowBlur=8;
+  ellipse(-11,5,4+2*pulse,1.8,"rgba(164,145,255,.24)");
+  ellipse(10,6,3+2*(1-pulse),1.5,"rgba(164,145,255,.20)");ctx.restore();
+ }
+ // Orbiting sparks are deliberately subtle so they do not obscure the silhouette.
  ctx.save();ctx.globalCompositeOperation="lighter";
  for(let i=0;i<5;i++){
   const a=phase*1.25+i*1.18;
-  const sx=Math.cos(a)*(31+(i%3)*4), sy=-67+Math.sin(a)*37;
-  ctx.globalAlpha=.16+.18*Math.sin(phase*3+i);
-  ctx.fillStyle=i%2?"#ffad48":"#bd79ff";
-  ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=7;
+  const sx=Math.cos(a)*(31+(i%3)*4),sy=-67+Math.sin(a)*37;
+  ctx.globalAlpha=.13+.15*Math.sin(phase*3+i);
+  ctx.fillStyle=i%2?"#ffad48":"#bd79ff";ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=7;
   ellipse(sx,sy,1.2,1.6,ctx.fillStyle);
  }
  ctx.restore();
  if(attack>.05){
-  ctx.save();ctx.globalAlpha=.28+attack*.18;ctx.strokeStyle="#c18aff";
+  const sd=iso(faceX,faceY),angle=Math.atan2(sd.y,sd.x);
+  ctx.save();ctx.translate(0,-92);ctx.rotate(angle-Math.PI/2);
+  ctx.globalAlpha=.25+attack*.2;ctx.strokeStyle="#c18aff";
   ctx.shadowColor="#b24dff";ctx.shadowBlur=14;ctx.lineWidth=3;
-  ctx.beginPath();ctx.arc(16,-94,49,-1.0,.4);ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.arc(18,0,48,-1.0,.4);ctx.stroke();ctx.restore();
  }
  if(skill>0){
   ctx.save();ctx.globalAlpha=.18+skill*.22;ctx.strokeStyle="#c58bff";
@@ -318,7 +372,7 @@ function attack(autoTarget=false){
  // last movement direction: the character strikes where the joystick points.
  if(autoTarget&&player.attackTarget){
   const dx=e.x-player.x,dy=e.y-player.y,l=Math.hypot(dx,dy)||1;
-  player.faceX=dx/l;player.faceY=dy/l;
+  setFacing(dx,dy);
  }
 }
 function castSkill(){
@@ -449,7 +503,7 @@ function tick(now){
   player.moving=inputLen>.055;
   if(player.moving){
    player.x+=dx*moveSpeed*dt;player.y+=dy*moveSpeed*dt;player.walk+=dt*8;
-   player.faceX=dx;player.faceY=dy;
+   setFacing(dx,dy);
   } else player.walk+=dt*1.5;
   player.x=clamp(player.x,-30,30);player.y=clamp(player.y,-30,30);
   if(autoAttack&&attackCooldown<=0){const e=nearestEnemy();if(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.75)attack(true);}

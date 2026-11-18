@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-// V3: 2D/2.5D isometric sprite-style prototype based on the user's supplied
+// V4: 2D/2.5D isometric sprite-style prototype based on the user's supplied
 // gameplay video. Original canvas artwork; not extracted game assets.
 document.addEventListener("contextmenu",e=>e.preventDefault());
 document.addEventListener("selectstart",e=>e.preventDefault());
@@ -107,7 +107,7 @@ function drawAura(x,y,r,color,alpha=1){
 // The supplied source is low-resolution, so keep it crisp enough for mobile and avoid
 // drawing a second geometric body over it. The aura remains separate gameplay VFX.
 const halpasSprite = new Image();
-halpasSprite.src = "./halpas_original_cutout.png?v=final-3";
+halpasSprite.src = "./halpas_original_cutout.png?v=final-4";
 let halpasSpriteReady = false;
 halpasSprite.onload = () => { halpasSpriteReady = true; };
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0){

@@ -28,7 +28,8 @@ const ui={
 };
 let hp=100,maxHp=100,mp=60,maxMp=60,xp=0,level=1,kills=0,wave=1,power=1,moveSpeed=3.2;
 let autoAttack=true,attackCooldown=0,skillCooldown=0,invuln=0,paused=false,gameEnded=false;
-const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,skillAnim:0,hit:0,moving:false};
+const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false};
+let screenShake=0;
 const enemies=[],particles=[],slashes=[],runes=[];
 const joy={x:0,y:0,active:false}; const keys={};
 let last=performance.now(),time=0,spawnTimer=0;
@@ -107,13 +108,13 @@ function drawAura(x,y,r,color,alpha=1){
 // The sheet is a newly-created 2D animation interpretation guided by the supplied
 // official appearance image and gameplay recording; it is not extracted game data.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-5";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-5-1";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0){
  ctx.save();
  ctx.translate(x,y);
- const bob = moving ? Math.sin(phase*2.0)*1.5 : Math.sin(phase*2.4)*.8;
+ const bob = moving ? Math.abs(Math.sin(phase*4.25))*2.4 : Math.sin(phase*2.7)*1.15;
  // Ground shadow and blue transformation ring remain separate from the sprite.
  ctx.save();
  ctx.globalAlpha=.38;
@@ -126,18 +127,27 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
   const cols=4, rows=4, cellW=halpasSheet.naturalWidth/cols, cellH=halpasSheet.naturalHeight/rows;
   let row=0, frame=0;
   if(skill>0){
-   row=3; frame=clamp(Math.floor((1-skill)*4.2),0,3);
+   // Burst: gather energy -> spiral -> detonation -> trailing embers.
+   const progress=1-skill;
+   row=3;
+   frame=progress<.18?0:progress<.40?1:progress<.74?2:3;
   } else if(attack>0){
-   row=2; frame=clamp(Math.floor((1-attack/.46)*4),0,3);
+   // Melee: wind-up -> raise weapon -> impact slash -> recovery.
+   const progress=1-attack/.68;
+   row=2;
+   frame=progress<.20?0:progress<.44?1:progress<.72?2:3;
   } else if(moving){
-   row=1; frame=Math.floor(phase*9)%4;
+   // Clear four-beat gait at a steady mobile-friendly cadence.
+   row=1; frame=Math.floor(phase*8.5)%4;
   } else {
-   row=0; frame=Math.floor(phase*2.8)%4;
+   // Slow idle loop so the armor and cape do not look frozen.
+   row=0; frame=Math.floor(phase*3.2)%4;
   }
   const sx=frame*cellW, sy=row*cellH;
   // Fixed frame box keeps the feet planted on the blue ring while each pose changes.
   const h=194*scale, w=h*(cellW/cellH);
-  const attackNudge=attack>0?Math.sin((.46-attack)*Math.PI/.46)*2.2:0;
+  const attackProgress=attack>0?1-attack/.68:0;
+  const attackNudge=attack>0?Math.sin(attackProgress*Math.PI)*5.2:0;
   ctx.save();
   ctx.translate(attackNudge,-bob);
   if(hit>0){ctx.globalAlpha=.78;ctx.filter="brightness(1.3) saturate(1.15)";}
@@ -220,17 +230,18 @@ function nearestEnemy(){
 }
 function attack(){
  if(gameEnded||paused||attackCooldown>0)return;
- attackCooldown=.56;player.attack=.46;
+ attackCooldown=.78;player.attack=.68;player.attackHitTimer=.29;
+ player.attackHitDone=false;
  const e=nearestEnemy();
- if(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.6){
-  damageEnemy(e,23*power);
-  const dx=e.x-player.x,dy=e.y-player.y,l=Math.hypot(dx,dy)||1;player.faceX=dx/l;player.faceY=dy/l;
- } else addBurst(player.x+player.faceX*.8,player.y+player.faceY*.8,"#777bff",9,.65);
- slashes.push({x:player.x+player.faceX*.5,y:player.y+player.faceY*.5,life:.22,max:.22});
+ player.attackTarget=(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.85)?e:null;
+ if(player.attackTarget){
+  const dx=e.x-player.x,dy=e.y-player.y,l=Math.hypot(dx,dy)||1;
+  player.faceX=dx/l;player.faceY=dy/l;
+ }
 }
 function castSkill(){
  if(gameEnded||paused||skillCooldown>0||mp<25)return;
- mp-=25;skillCooldown=5;player.skillAnim=1.0;player.attack=0;
+ mp-=25;skillCooldown=5.4;player.skillAnim=1.12;player.attack=0;player.attackTarget=null;player.attackHitTimer=0;screenShake=.30;
  runes.push({x:player.x,y:player.y,r:.3,life:.9,max:.9});
  addBurst(player.x,player.y,"#b77aff",50,1.8);
  addBurst(player.x,player.y,"#ffb0dc",28,1.3);
@@ -267,6 +278,11 @@ document.querySelector("#restartBtn").addEventListener("click",()=>location.relo
 function endGame(){gameEnded=true;ui.gameOver.classList.remove("hidden");document.querySelector("#finalStats").textContent=`等級 ${level} · 擊殺 ${kills} 隻怪物 · 抵擋 ${wave} 波`;}
 
 function draw(){
+ ctx.save();
+ if(screenShake>0){
+  const strength=screenShake*18;
+  ctx.translate((Math.random()-.5)*strength,(Math.random()-.5)*strength);
+ }
  drawFloor();
  // Sort actors by isometric depth for simple 2.5D overlap.
  const actors=enemies.map(e=>({y:e.x+e.y,draw:()=>drawEnemy(e)}));
@@ -294,8 +310,25 @@ function draw(){
 function tick(now){
  const dt=Math.min((now-last)/1000,.04);last=now;time+=dt;
  if(!paused&&!gameEnded){
-  attackCooldown=Math.max(0,attackCooldown-dt);skillCooldown=Math.max(0,skillCooldown-dt);invuln=Math.max(0,invuln-dt);
-  player.attack=Math.max(0,player.attack-dt);player.skillAnim=Math.max(0,player.skillAnim-dt);player.hit=Math.max(0,player.hit-dt);mp=Math.min(maxMp,mp+dt*2.1);
+  attackCooldown=Math.max(0,attackCooldown-dt);skillCooldown=Math.max(0,skillCooldown-dt);invuln=Math.max(0,invuln-dt);screenShake=Math.max(0,screenShake-dt);
+  player.attack=Math.max(0,player.attack-dt);player.skillAnim=Math.max(0,player.skillAnim-dt);player.hit=Math.max(0,player.hit-dt);
+  if(player.attackHitTimer>0&&!player.attackHitDone){
+   player.attackHitTimer=Math.max(0,player.attackHitTimer-dt);
+   if(player.attackHitTimer===0){
+    player.attackHitDone=true;screenShake=Math.max(screenShake,.075);
+    const target=player.attackTarget;
+    if(target&&enemies.includes(target)&&Math.hypot(target.x-player.x,target.y-player.y)<3.25){
+     damageEnemy(target,23*power);
+     slashes.push({x:target.x,y:target.y,life:.24,max:.24});
+     addBurst(target.x,target.y,"#bd8cff",12,.9);
+    } else {
+     const hx=player.x+player.faceX*.9,hy=player.y+player.faceY*.9;
+     addBurst(hx,hy,"#8d83ff",11,.75);
+     slashes.push({x:hx,y:hy,life:.20,max:.20});
+    }
+   }
+  }
+  mp=Math.min(maxMp,mp+dt*2.1);
   let dx=joy.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
   let dy=joy.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   const len=Math.hypot(dx,dy);if(len>1){dx/=len;dy/=len;}

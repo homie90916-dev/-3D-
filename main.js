@@ -105,141 +105,155 @@ function drawAura(x,y,r,color,alpha=1){
 }
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
- const bob=Math.sin(phase*7)*1.35;
- const sway=Math.sin(phase*3.1)*4.4 + Math.sin(phase*1.7)*1.4;
+ const bob=Math.sin(phase*6.5)*1.1;
+ const capeWave=Math.sin(phase*2.7)*3.5 + Math.sin(phase*1.4)*1.8;
+ const flame=Math.sin(phase*4.1)*1.6;
 
- // Ground aura and soft cast shadow.
- ctx.save();ctx.globalAlpha=.25;ctx.shadowColor="#4268ff";ctx.shadowBlur=24;
- ellipse(0,7,29,10,"#344cff");ctx.restore();
- drawAura(0,8,29,"#536cff",.95);
+ // Ground shadow and the familiar blue transformation circle.
+ ctx.save();ctx.globalAlpha=.3;ctx.shadowColor="#3c55ff";ctx.shadowBlur=24;
+ ellipse(0,10,34,11,"#293fff");ctx.restore();
+ drawAura(0,10,32,"#536cff",.92);
 
- // No dragon wings: keep the original-inspired cape silhouette clear.
- // Long crimson mantle, layered with dark inner fold and gold hem.
- path([[-11,-35],[11,-35],[17,-16+sway],[23,15+sway],[12,21+sway],[3,18+sway],[-5,21-sway],[-15,17-sway],[-23,13-sway],[-17,-16]],
-      "#260a19","#b33c55",1.7);
- path([[-8,-33],[8,-33],[13,-15+sway],[17,12+sway],[10,17+sway],[3,14+sway],[-5,17-sway],[-13,13-sway],[-17,10-sway],[-13,-15]],
-      "#8d1734","#e05a70",1.1);
- path([[-13,-15],[-9,-10+sway],[0,-7+sway],[9,-10+sway],[14,-15]],
-      null,"#e3b65d",1.2);
- // Layered fabric folds and a soft red highlight make the cape read as cloth.
- path([[-13,-27],[-9,-14+sway],[-13,15+sway]],null,"#d34d68",1.2);
- path([[-3,-29],[0,-13+sway],[1,18+sway]],null,"#f07885",1.1);
- path([[7,-28],[10,-13+sway],[13,16+sway]],null,"#6c142d",1.3);
- path([[15,-23],[17,-8+sway],[20,12+sway]],null,"#d34d68",.9);
- // Soft central fabric sheen and darker side folds add cloth depth.
- ctx.save();ctx.globalAlpha=.34;
- const cloth=ctx.createLinearGradient(-15,-20,15,5+sway);
- cloth.addColorStop(0,"#4b1028");cloth.addColorStop(.48,"#f06a7b");cloth.addColorStop(1,"#4a0c25");
- path([[-9,-30],[0,-32],[9,-30],[17,13+sway],[10,18+sway],[3,15+sway],[-5,18-sway],[-15,13-sway],[-18,9-sway]],cloth);
- ctx.restore();
- // Cloak center seam and clasp.
- ctx.strokeStyle="#e4b75f";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(1,17+sway);ctx.stroke();
- ellipse(0,-33,4.2,3.3,"#f4d27b","#79501f",1);
-
- // Armored legs and heavy boots with gold toe plates.
- path([[-11,-8],[-2,-8],[-3,10],[-9,15],[-15,11]],"#151927","#7861b0",1.2);
- path([[2,-8],[11,-8],[15,11],[8,15],[3,10]],"#151927","#7861b0",1.2);
- path([[-15,9],[-5,9],[-4,17],[-17,18]],"#090d17","#d2a34f",1.4);
- path([[5,9],[15,9],[18,17],[5,18]],"#090d17","#d2a34f",1.4);
- path([[-13,11],[-6,11],[-6,14],[-14,14]],"#b88a3e");
- path([[7,11],[14,11],[15,14],[7,14]],"#b88a3e");
- path([[-15,9],[-5,9],[-4,11],[-14,11]],null,"#ffe29a",.8);
- path([[5,9],[15,9],[16,11],[6,11]],null,"#ffe29a",.8);
-
- // Torso silhouette and layered breastplate with shaded metal bevels.
- const armorShade=ctx.createLinearGradient(-16,-38,16,-5);
- armorShade.addColorStop(0,"#080d18");armorShade.addColorStop(.38,"#303044");armorShade.addColorStop(.72,"#171a2c");armorShade.addColorStop(1,"#080b15");
- path([[-16,-33],[-12,-41],[0,-44],[12,-41],[16,-33],[14,-10],[8,-2],[-8,-2],[-14,-10]],
-      armorShade,"#b48b4b",1.8);
- path([[-12,-32],[-8,-39],[0,-41],[8,-39],[12,-32],[10,-12],[0,-7],[-10,-12]],
-      "#242039","#e0b65e",1.25);
- path([[-10,-31],[-7,-37],[0,-39],[7,-37],[10,-31],[8,-13],[0,-9],[-8,-13]],
-      null,"rgba(255,230,165,.38)",.8);
- path([[-7,-32],[0,-37],[7,-32],[6,-18],[0,-13],[-6,-18]],
-      "#171629","#8565d8",1.1);
- path([[-4,-31],[0,-34],[4,-31],[3,-21],[-3,-21]],"#4a3268","#c7a0ff",.8);
- // Fine gold filigree lines on the breastplate.
- ctx.strokeStyle="#d8b05d";ctx.lineWidth=.8;
- ctx.beginPath();ctx.moveTo(-8,-24);ctx.lineTo(-5,-20);ctx.lineTo(-2,-19);
- ctx.moveTo(8,-24);ctx.lineTo(5,-20);ctx.lineTo(2,-19);ctx.stroke();
- // Breastplate highlights and center ruby.
- ctx.strokeStyle="#f0c96b";ctx.lineWidth=1;
- ctx.beginPath();ctx.moveTo(-8,-35);ctx.lineTo(-4,-28);ctx.lineTo(0,-26);ctx.lineTo(4,-28);ctx.lineTo(8,-35);ctx.stroke();
- path([[-2,-25],[0,-28],[2,-25],[0,-21]],"#d84d6d","#ffd0df",.6);
-
- // Shoulder pauldrons: layered gold rims over dark steel.
- ellipse(-14,-31,7.5,6.5,"#171a28","#f0c66d",1.8);
- ellipse(14,-31,7.5,6.5,"#171a28","#f0c66d",1.8);
- path([[-21,-32],[-18,-43],[-12,-40],[-8,-32],[-14,-26]],"#76502a","#f6d987",1.3);
- path([[21,-32],[18,-43],[12,-40],[8,-32],[14,-26]],"#76502a","#f6d987",1.3);
- path([[-18,-35],[-16,-40],[-12,-37],[-10,-33]],null,"#fff0bb",1);
- path([[18,-35],[16,-40],[12,-37],[10,-33]],null,"#fff0bb",1);
- path([[-18,-34],[-16,-39],[-13,-36]],"#f8dc91");
- path([[18,-34],[16,-39],[13,-36]],"#f8dc91");
-
- // Forearms and gauntlets.
- path([[-18,-27],[-14,-25],[-15,-12],[-20,-11],[-22,-18]],"#171b2b","#bd8c43",1.2);
- path([[18,-27],[14,-25],[15,-12],[20,-11],[22,-18]],"#171b2b","#bd8c43",1.2);
- path([[-21,-17],[-15,-17],[-14,-12],[-21,-11]],"#c18b3b","#f4d37a",.8);
- path([[21,-17],[15,-17],[14,-12],[21,-11]],"#c18b3b","#f4d37a",.8);
-
- // Horned dragon helm with a strong faceplate silhouette.
- ellipse(0,-46+bob,10.2,10.8,"#171b2b","#d3a34e",1.4);
- path([[-10,-48],[-8,-57],[-4,-52],[0,-61],[4,-52],[8,-57],[10,-48],[7,-39],[-7,-39]],
-      "#9d7133","#f5d47d",1.5);
- path([[-7,-47],[-5,-52],[0,-49],[5,-52],[7,-47],[5,-41],[-5,-41]],
-      "#25233d","#e3b75f",1);
- path([[-5,-45],[0,-48],[5,-45],[3,-40],[-3,-40]],"#111a31","#627cff",.8);
- roundedRect(-4,-45+bob,8,2.2,1,"#5d9aff");
- // Crown horns, gold inner edge.
- path([[-7,-51],[-15,-63],[-12,-51],[-5,-48]],"#b78337","#ffe39a",1.2);
- path([[7,-51],[15,-63],[12,-51],[5,-48]],"#b78337","#ffe39a",1.2);
- path([[-13,-58],[-12,-52],[-9,-51]],null,"#fff0bd",.8);
- path([[13,-58],[12,-52],[9,-51]],null,"#fff0bd",.8);
-
- // Oversized violet greatsword, with gem core, crossguard and pommel.
- ctx.save();ctx.translate(18,-27);ctx.rotate(-.38+attack*.38);
- path([[-2,1],[2,1],[2,16],[-2,16]],"#4d2b20","#e3b65b",1);
- path([[-6,1],[6,1],[5,4],[-5,4]],"#d7a64e","#fff0a0",.8);
- path([[-3,-1],[-7,-20],[0,-34],[7,-20],[3,-1]],"#31145f","#8b6cff",1.5);
- path([[-1,-4],[-4,-20],[0,-29],[4,-20],[1,-4]],"#987cff","#d8c8ff",.8);
- path([[0,-28],[0,-5]],null,"#e5d7ff",.8);
- // Crystal edge glow.
- ctx.save();ctx.globalAlpha=.62;ctx.shadowColor="#a76aff";ctx.shadowBlur=12;
- ctx.strokeStyle="#c8a7ff";ctx.lineWidth=1.5;
- ctx.beginPath();ctx.moveTo(-5,-19);ctx.lineTo(0,-31);ctx.lineTo(5,-19);ctx.stroke();
- ctx.restore();
- ellipse(0,15,2.2,2.2,"#d9b65c","#fff0b0",.5);
- ctx.restore();
-
- // A brief violet sweep appears only during the attack animation.
- if(attack>.05){
-  ctx.save();ctx.globalAlpha=.35+attack*.28;ctx.strokeStyle="#c18aff";
-  ctx.shadowColor="#a34dff";ctx.shadowBlur=17;ctx.lineWidth=3;
-  ctx.beginPath();ctx.arc(7,-26,31,-1.12,.42);ctx.stroke();
+ // Purple/orange released-energy flames behind the body. These are aura tongues,
+ // not wings: they rise and flare from the shoulders with irregular pointed tips.
+ ctx.save();ctx.globalCompositeOperation="lighter";
+ const auraGrad=ctx.createRadialGradient(0,-61,5,0,-54,54);
+ auraGrad.addColorStop(0,"rgba(255,171,55,.48)");
+ auraGrad.addColorStop(.38,"rgba(174,59,255,.27)");
+ auraGrad.addColorStop(1,"rgba(65,31,150,0)");
+ ellipse(0,-55,38,49,auraGrad);
+ ctx.globalAlpha=.74;
+ const energyFlames=[
+  [[-23,-43],[-35,-62],[-32,-82],[-22,-68],[-18,-52]],
+  [[-12,-51],[-20,-75],[-10,-91],[-5,-72],[-4,-53]],
+  [[7,-53],[11,-76],[24,-91],[22,-69],[16,-49]],
+  [[21,-44],[32,-63],[39,-78],[36,-56],[27,-43]]
+ ];
+ energyFlames.forEach((pts,i)=>{
+  ctx.save();ctx.globalAlpha=.42+.12*Math.sin(phase*3+i);
+  ctx.shadowColor=i%2?"#ff9b35":"#a54cff";ctx.shadowBlur=15;
+  path(pts,i%2?"rgba(255,151,52,.45)":"rgba(151,69,255,.43)",i%2?"#ffbd64":"#c18aff",1.1);
   ctx.restore();
- }
-
- // Animated glints on metal and a cool blue edge aura.
- ctx.save();ctx.globalCompositeOperation="lighter";ctx.globalAlpha=.22+.06*Math.sin(phase*5);
- ctx.strokeStyle="#638cff";ctx.lineWidth=4;ctx.shadowColor="#4a66ff";ctx.shadowBlur=15;
- ctx.beginPath();ctx.ellipse(0,-28,20,34,0,0,Math.PI*2);ctx.stroke();
+ });
  ctx.restore();
- // Tiny moving sparkles around the armor.
- for(let i=0;i<3;i++){
-  const a=phase*1.8+i*2.1, sx=Math.cos(a)*24, sy=-28+Math.sin(a)*28;
-  ctx.globalAlpha=.45+.35*Math.sin(phase*4+i);
-  ellipse(sx,sy,1.1,1.1,"#9ab8ff");
+
+ // Heavy crimson mantle: anchored high on the left shoulder and sweeping down-left.
+ // This deliberately follows the reference card's one-sided cape silhouette.
+ const c=capeWave;
+ const capeGrad=ctx.createLinearGradient(-39,-43,10,20);
+ capeGrad.addColorStop(0,"#210711");capeGrad.addColorStop(.34,"#8d102b");
+ capeGrad.addColorStop(.7,"#bd2341");capeGrad.addColorStop(1,"#3b0918");
+ path([[-17,-48],[-31,-48],[-42,-35],[-48,-10],[-56,13],[-48,23],[-37,18],[-28,23],[-17,12],[-13,-10]],capeGrad,"#e4a34c",1.4);
+ path([[-23,-43],[-34,-37],[-40,-13],[-49,14],[-40,18],[-31,11],[-24,16],[-18,6],[-17,-22]],"#a91634","#6f1025",.8);
+ // Cloth folds, gold hem and wind-caught highlights.
+ path([[-30,-37],[-33,-17+c],[-44,15+c]],null,"#ef5268",1.5);
+ path([[-23,-34],[-25,-13+c],[-34,17+c]],null,"#5b0c22",1.7);
+ path([[-17,-39],[-19,-15+c],[-23,10+c]],null,"#e74a62",1.1);
+ path([[-48,14+c],[-40,20+c],[-31,15+c],[-24,19+c],[-17,10+c]],null,"#e9b85e",1.4);
+ // Inner dark lining gives the cape weight.
+ path([[-18,-42],[-26,-35],[-31,-12+c],[-27,12+c],[-19,4]],"rgba(31,5,19,.72)");
+
+ // Back armor and waist silhouette.
+ path([[-19,-35],[18,-35],[22,-5],[15,15],[-13,15],[-22,-4]],"#171018","#5b351f",1.3);
+ path([[-17,-12],[-11,-17],[11,-17],[17,-10],[13,15],[7,23],[-9,23],[-16,14]],"#17131b","#b7792f",1.2);
+
+ // Long, weighty legs and pointed gold-black greaves (less chibi proportions).
+ path([[-14,-5],[-3,-5],[-5,22],[-10,31],[-20,28],[-19,18]],"#16131a","#8d592a",1.2);
+ path([[3,-5],[15,-5],[19,17],[15,29],[5,31],[2,21]],"#100f17","#8d592a",1.2);
+ path([[-21,21],[-7,22],[-7,32],[-25,34],[-29,29]],"#080a10","#e0a846",1.6);
+ path([[6,22],[20,21],[27,28],[24,34],[6,33]],"#080a10","#e0a846",1.6);
+ path([[-24,27],[-9,27],[-8,30],[-25,31]],"#bd7d29","#ffe19a",.8);
+ path([[8,27],[23,27],[24,30],[8,30]],"#bd7d29","#ffe19a",.8);
+
+ // Broad black-gold torso with layered, angular plate construction.
+ const torso=ctx.createLinearGradient(-22,-43,22,16);
+ torso.addColorStop(0,"#4b3422");torso.addColorStop(.2,"#19151a");
+ torso.addColorStop(.58,"#090b12");torso.addColorStop(.82,"#302018");torso.addColorStop(1,"#09090e");
+ path([[-19,-45],[-12,-53],[0,-56],[13,-52],[20,-43],[18,-15],[12,-2],[7,5],[-8,5],[-15,-4],[-20,-17]],torso,"#d59b42",2);
+ // Outer gold bevel plates and central dark cuirass.
+ path([[-16,-43],[-10,-49],[0,-52],[10,-49],[16,-42],[14,-17],[8,-7],[-8,-7],[-14,-17]],"#16121a","#f0bd58",1.5);
+ path([[-11,-43],[-6,-47],[0,-48],[7,-46],[11,-41],[9,-19],[0,-13],[-9,-19]],"#21151b","#9a642d",1.1);
+ path([[-7,-41],[0,-45],[7,-41],[6,-22],[0,-17],[-6,-22]],"#090d15","#d49a3e",1.1);
+ // Raised chest ribs and angular gold filigree.
+ path([[-14,-39],[-9,-30],[-5,-26],[0,-25]],null,"#e6ad4e",1.5);
+ path([[14,-39],[9,-30],[5,-26],[0,-25]],null,"#e6ad4e",1.5);
+ path([[-10,-18],[-5,-12],[0,-10],[5,-12],[10,-18]],null,"#c78b39",1.2);
+ // Glowing magenta heart/core as seen on the card art.
+ ctx.save();ctx.globalCompositeOperation="lighter";ctx.shadowColor="#ff3cbd";ctx.shadowBlur=13;
+ path([[-4,-31],[0,-36],[5,-31],[3,-24],[0,-21],[-3,-25]],"#d62c8b","#ffb1e8",1.1);
+ ellipse(0,-29,1.8,2.4,"#fff0fb");ctx.restore();
+
+ // Massive flame-forged pauldrons: asymmetrical, broad and bright gold.
+ const shoulderGrad=ctx.createLinearGradient(-30,-51,30,-27);
+ shoulderGrad.addColorStop(0,"#fff0a0");shoulderGrad.addColorStop(.22,"#d98a25");
+ shoulderGrad.addColorStop(.55,"#61351b");shoulderGrad.addColorStop(.82,"#e5a83e");shoulderGrad.addColorStop(1,"#3b2118");
+ path([[-29,-39],[-31,-52],[-23,-61],[-15,-55],[-10,-43],[-15,-30],[-25,-28]],shoulderGrad,"#ffe28b",1.8);
+ path([[15,-43],[20,-57],[29,-61],[35,-51],[32,-37],[25,-29],[16,-31]],shoulderGrad,"#ffe28b",1.8);
+ path([[-28,-47],[-23,-56],[-18,-51],[-15,-42],[-23,-37]],"#f6bd4c","#fff0ad",1);
+ path([[20,-44],[25,-55],[31,-51],[29,-40],[23,-36]],"#e8a33c","#fff0ad",1);
+ // Flame-shaped upper spikes on the shoulders.
+ path([[-26,-54],[-33,-68],[-20,-61],[-15,-51]],"#d77b25","#ffe7a0",1.2);
+ path([[25,-55],[35,-68],[32,-53],[19,-49]],"#d77b25","#ffe7a0",1.2);
+
+ // Armored arms, heavy gauntlets and glowing gold knuckle plates.
+ path([[-25,-35],[-18,-33],[-20,-14],[-25,-10],[-30,-17]],"#17131a","#b77b31",1.2);
+ path([[22,-34],[29,-32],[31,-15],[25,-10],[20,-17]],"#17131a","#b77b31",1.2);
+ path([[-29,-21],[-20,-23],[-18,-14],[-27,-12]],"#b7772c","#ffe08a",1.2);
+ path([[20,-22],[30,-21],[31,-12],[22,-12]],"#b7772c","#ffe08a",1.2);
+
+ // Demonic head: dark mask, glowing eyes and a blazing gold crown of horns.
+ const head=ctx.createRadialGradient(-3,-66,2,0,-64,17);
+ head.addColorStop(0,"#4a2518");head.addColorStop(.52,"#171018");head.addColorStop(1,"#05070d");
+ ellipse(0,-65+bob,13,16,head,"#d58d32",1.5);
+ path([[-11,-69],[-9,-79],[-3,-75],[0,-82],[4,-75],[10,-80],[12,-68],[8,-56],[0,-53],[-9,-57]],"#151018","#f0b44a",1.5);
+ // Face mask and jaw ridges.
+ path([[-8,-67],[0,-72],[8,-67],[6,-59],[0,-55],[-6,-59]],"#070910","#8e5127",.8);
+ path([[-6,-65],[-2,-67],[0,-64],[-4,-62]],"#ff8c35");
+ path([[6,-65],[2,-67],[0,-64],[4,-62]],"#ff8c35");
+ path([[-5,-58],[0,-61],[5,-58],[2,-55],[-2,-55]],"#33202a","#d38b37",.7);
+ // Large crown horns: flame-like, branching and asymmetrical rather than a simple pair.
+ path([[-9,-69],[-20,-83],[-18,-67],[-12,-60]],"#c87924","#ffe7a0",1.4);
+ path([[8,-69],[19,-86],[17,-67],[11,-59]],"#d98a2d","#fff0ae",1.4);
+ path([[-17,-78],[-24,-87],[-20,-73]],"#f4b747","#fff0a0",1);
+ path([[17,-80],[25,-88],[20,-73]],"#f4b747","#fff0a0",1);
+ path([[-3,-76],[0,-88],[4,-76],[2,-70]],"#f6b83f","#fff0b2",1.2);
+ // Fiery rim light around the crown.
+ ctx.save();ctx.globalCompositeOperation="lighter";ctx.globalAlpha=.48;
+ ctx.strokeStyle="#ff9a35";ctx.shadowColor="#ff6a1a";ctx.shadowBlur=12;ctx.lineWidth=2;
+ ctx.beginPath();ctx.arc(0,-66,16,Math.PI*1.08,Math.PI*1.9);ctx.stroke();ctx.restore();
+
+ // Violet greatsword held to the right; retain the established game identity.
+ ctx.save();ctx.translate(24,-30);ctx.rotate(-.24+attack*.42);
+ path([[-3,0],[3,0],[3,20],[-3,20]],"#3b211b","#e0a34a",1);
+ path([[-8,0],[8,0],[6,4],[-6,4]],"#c38a36","#ffe6a0",1);
+ path([[-4,-2],[-8,-24],[0,-46],[8,-24],[4,-2]],"#24103f","#d6a4ff",1.8);
+ path([[-2,-5],[-5,-24],[0,-40],[5,-24],[2,-5]],"#8353d8","#f0d5ff",1);
+ path([[0,-39],[0,-7]],null,"#fff0ff",1.2);
+ ctx.save();ctx.globalAlpha=.72;ctx.shadowColor="#b85aff";ctx.shadowBlur=17;
+ ctx.strokeStyle="#d7b5ff";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-6,-23);ctx.lineTo(0,-43);ctx.lineTo(6,-23);ctx.stroke();ctx.restore();
+ ellipse(0,19,2.4,2.4,"#f4c45f","#fff0a0",.7);
+ ctx.restore();
+
+ // Short purple energy arc during attacks, separate from the body's aura.
+ if(attack>.05){
+  ctx.save();ctx.globalAlpha=.38+attack*.32;ctx.strokeStyle="#c18aff";
+  ctx.shadowColor="#b24dff";ctx.shadowBlur=19;ctx.lineWidth=3.2;
+  ctx.beginPath();ctx.arc(7,-43,43,-1.08,.42);ctx.stroke();ctx.restore();
  }
- // Brief warm glints travel across the gold trim during idle animation.
- ctx.globalAlpha=.18+.12*Math.sin(phase*2.2);
- ctx.strokeStyle="#ffe3a0";ctx.lineWidth=.9;
- ctx.beginPath();ctx.moveTo(-17,-33);ctx.lineTo(-12,-29);ctx.moveTo(17,-33);ctx.lineTo(12,-29);ctx.stroke();
- // Short red impact rim when the character takes damage.
+ // Gold embers and violet sparks around the released form.
+ ctx.save();ctx.globalCompositeOperation="lighter";
+ for(let i=0;i<7;i++){
+  const a=phase*1.35+i*0.91;
+  const sx=Math.cos(a)*(27+(i%3)*4), sy=-52+Math.sin(a)*34;
+  ctx.globalAlpha=.28+.28*Math.sin(phase*3+i);
+  ctx.fillStyle=i%2?"#ffad48":"#bd79ff";ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=8;
+  ellipse(sx,sy,1.2+(i%2)*.5,1.8,ctx.fillStyle);
+ }
+ ctx.restore();
  if(hit>0){
   ctx.save();ctx.globalAlpha=clamp(hit/.2,0,1)*.72;ctx.strokeStyle="#ff5268";
   ctx.shadowColor="#ff334f";ctx.shadowBlur=16;ctx.lineWidth=2.2;
-  ctx.beginPath();ctx.ellipse(0,-26,24,39,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.ellipse(0,-35,35,54,0,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
  ctx.restore();
 }

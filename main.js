@@ -35,57 +35,130 @@ for(let i=0;i<24;i++){
   rock.position.set(Math.cos(a)*r,.25,Math.sin(a)*r); rock.rotation.set(Math.random(),Math.random(),Math.random()); rock.castShadow=true; scene.add(rock);
 }
 
-// Original stylized 3D interpretation of the requested dark dragon-like transformation.
+// Version 2: detailed original 3D interpretation guided by the public promotional
+// appearance reference: dark plate armor, gold trim, horned helm, crimson cape,
+// and a large violet greatsword. This is a newly-built approximation, not game assets.
 function makeHalpas(){
   const root=new THREE.Group(); scene.add(root);
-  const add=(geo,material,x,y,z,sx=1,sy=1,sz=1,rx=0,ry=0,rz=0)=>{
-    const m=new THREE.Mesh(geo,material); m.position.set(x,y,z); m.scale.set(sx,sy,sz); m.rotation.set(rx,ry,rz); m.castShadow=true; m.receiveShadow=true; root.add(m); return m;
+  const body=new THREE.Group(); root.add(body);
+  const gold=mat(0xb78a3d,.82,.25,0x4a2b08,.22);
+  const goldBright=mat(0xf0c86b,.78,.2,0x76501b,.35);
+  const blackSteel=mat(0x171b25,.88,.28,0x090d19,.18);
+  const steel=mat(0x343b49,.86,.24,0x151b2c,.22);
+  const steelLight=mat(0x667184,.82,.22);
+  const leather=mat(0x24151b,.18,.72);
+  const capeMat=new THREE.MeshStandardMaterial({color:0x781b32,roughness:.78,side:THREE.DoubleSide,emissive:0x26000b,emissiveIntensity:.22});
+  const purpleBlade=new THREE.MeshStandardMaterial({color:0x8b4cff,metalness:.55,roughness:.2,emissive:0x7c20ff,emissiveIntensity:1.7,transparent:true,opacity:.94});
+  const darkPurple=mat(0x32145e,.62,.25,0x4b13a1,.8);
+  const redEye=new THREE.MeshBasicMaterial({color:0xff3b58});
+  const sphere=new THREE.SphereGeometry(1,18,14), cyl=new THREE.CylinderGeometry(1,1,1,12), cone=new THREE.ConeGeometry(1,1,10);
+  const add=(parent,geo,material,x,y,z,sx=1,sy=1,sz=1,rx=0,ry=0,rz=0)=>{
+    const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.rotation.set(rx,ry,rz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
   };
-  const sphere=new THREE.SphereGeometry(1,16,12), cone=new THREE.ConeGeometry(1,1,8), cyl=new THREE.CylinderGeometry(1,1,1,10);
-  add(sphere, dark,0,1.55,0,.48,.67,.32);
-  add(sphere, armor,0,1.65,-.03,.43,.58,.34);
-  add(sphere, silver,0,2.12,.02,.32,.35,.29);
-  add(sphere, dark,0,2.16,.13,.29,.28,.25);
-  // face plate and glowing eyes
-  add(sphere,silver,0,2.12,.34,.24,.18,.09);
-  add(sphere,eyeMat,-.12,2.22,.39,.045,.035,.025); add(sphere,eyeMat,.12,2.22,.39,.045,.035,.025);
-  // crown horns
-  add(cone,silver,-.22,2.48,-.01,.12,.55,.12,0,0,.35);
-  add(cone,silver,.22,2.48,-.01,.12,.55,.12,0,0,-.35);
-  add(cone,red,0,2.52,-.08,.09,.38,.09);
-  // shoulder guards, arms, gauntlets
-  for(const s of [-1,1]){
-    add(sphere,silver,s*.48,1.9,0,.27,.22,.27,0,0,s*-.25);
-    add(cone,armor,s*.55,2.04,-.02,.18,.45,.18,0,0,s*-.9);
-    add(cyl,dark,s*.48,1.48,0,.13,.53,.13,0,0,s*-.08);
-    add(sphere,silver,s*.48,1.17,.03,.16,.17,.16);
-    // legs
-    add(cyl,armor,s*.22,.67,0,.16,.72,.18,0,0,s*-.03);
-    add(sphere,dark,s*.22,.25,.09,.2,.18,.3);
-    add(cone,silver,s*.22,.08,.2,.13,.18,.13,Math.PI,0,0);
-    // wing spars
-    const wing=add(new THREE.BufferGeometry(),purple,s*.7,1.85,-.12,1,1,1);
-    wing.geometry.dispose();
-    const shape=new THREE.Shape();
-    shape.moveTo(0,0); shape.quadraticCurveTo(s*.65,.45,s*1.25,.15);
-    shape.lineTo(s*.78,-.35); shape.lineTo(s*.48,-.18); shape.lineTo(s*.25,-.62); shape.lineTo(0,-.3); shape.closePath();
-    const wingMesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),dark);
-    wingMesh.position.set(s*.55,1.95,-.22); wingMesh.rotation.y=s*-.22; wingMesh.castShadow=true; root.add(wingMesh);
-    const vein=new THREE.Mesh(new THREE.BoxGeometry(.035,1.3,.035),glow);
-    vein.position.set(s*.92,1.8,-.16); vein.rotation.z=s*.4; root.add(vein);
+  const box=(parent,material,x,y,z,sx,sy,sz,rx=0,ry=0,rz=0)=>add(parent,new THREE.BoxGeometry(1,1,1),material,x,y,z,sx,sy,sz,rx,ry,rz);
+  const plate=(parent,pts,material,x,y,z,depth=.07)=>{
+    const sh=new THREE.Shape();sh.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)sh.lineTo(pts[i][0],pts[i][1]);sh.closePath();
+    const mesh=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth,bevelEnabled:true,bevelSegments:1,steps:1,bevelSize:.035,bevelThickness:.025}),material);
+    mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;
+  };
+  // Heavy armored torso and waist.
+  add(body,sphere,blackSteel,0,1.48,0,.48,.68,.32);
+  add(body,sphere,steel,0,1.58,.015,.43,.58,.34);
+  box(body,blackSteel,0,1.08,0,.48,.24,.36);
+  // Back armor spine, visible from the third-person camera.
+  for(let i=0;i<4;i++){
+    const y=1.25+i*.19;
+    plate(body,[[-.16,.08],[0,.18],[.16,.08],[0,-.09]],i%2?gold:steelLight,-.0,y,-.355,.045);
   }
-  // chest rune
-  add(cone,glow,0,1.68,.36,.09,.32,.06,Math.PI,0,0);
-  // tail
-  const tail=add(cone,armor,0,.8,-.52,.17,.95,.17,Math.PI/2,0,0);
-  tail.rotation.z=Math.PI/2;
-  add(cone,silver,0,.8,-1.02,.16,.3,.16,Math.PI/2,0,0);
-  // ground aura
-  const aura=new THREE.Mesh(new THREE.TorusGeometry(.85,.035,8,48),glow);
-  aura.rotation.x=Math.PI/2; aura.position.y=.04; root.add(aura);
-  const aura2=new THREE.Mesh(new THREE.TorusGeometry(1.12,.012,6,48),purple);
-  aura2.rotation.x=Math.PI/2; aura2.position.y=.045; root.add(aura2);
-  root.userData={wingMeshes:root.children.filter(o=>o.geometry?.type==="ShapeGeometry"), aura};
+  // Front chest cuirass with raised gold heraldic ribs and central amethyst.
+  plate(body,[[-.34,.28],[-.27,.53],[0,.62],[.27,.53],[.34,.28],[.18,-.05],[0,-.16],[-.18,-.05]],blackSteel,-.34,1.36,.29,.09);
+  plate(body,[[-.28,.23],[-.2,.46],[0,.52],[.2,.46],[.28,.23],[.13,-.02],[0,-.1],[-.13,-.02]],steel,-.28,1.4,.385,.045);
+  plate(body,[[-.19,.2],[-.1,.39],[0,.45],[.1,.39],[.19,.2],[0,-.05]],gold,-.19,1.42,.44,.025);
+  add(body,sphere,darkPurple,0,1.67,.49,.105,.14,.055);
+  add(body,sphere,purpleBlade,0,1.68,.545,.055,.085,.025);
+  // Waist belt and layered armored tassets.
+  box(body,gold,0,1.04,.02,.62,.09,.39);
+  add(body,sphere,goldBright,0,1.04,.235,.13,.12,.055);
+  for(const side of [-1,1]){
+    plate(body,[[-.02,.12],[.2,.2],[.29,-.18],[.12,-.34],[-.06,-.19]],blackSteel,side*.16,.83,.25,.06);
+    plate(body,[[-.01,.1],[.15,.15],[.21,-.14],[.1,-.25],[-.04,-.15]],gold,side*.16,.84,.315,.025);
+  }
+  // Neck and imposing horned helmet.
+  add(body,cyl,blackSteel,0,2.04,0,.19,.28,.19);
+  add(body,sphere,blackSteel,0,2.27,0,.34,.39,.31);
+  add(body,sphere,steel,0,2.31,.015,.32,.34,.3);
+  // Helmet brow, cheek guards and face slit.
+  plate(body,[[-.31,.06],[-.24,.2],[0,.28],[.24,.2],[.31,.06],[.17,-.02],[0,.04],[-.17,-.02]],gold,-.31,2.28,.255,.045);
+  plate(body,[[-.27,.05],[-.2,-.19],[-.08,-.28],[0,-.1],[.08,-.28],[.2,-.19],[.27,.05],[0,.12]],blackSteel,-.27,2.12,.29,.055);
+  box(body,redEye,0,2.24,.355,.22,.035,.025);
+  // Crown crest and swept horns.
+  plate(body,[[-.13,.03],[0,.32],[.13,.03],[.08,-.05],[-.08,-.05]],goldBright,-.13,2.52,.05,.04);
+  const hornL=add(body,cone,gold,-.22,2.55,-.015,.105,.56,.105,0,0,.38);hornL.rotation.z=.48;
+  const hornR=add(body,cone,gold,.22,2.55,-.015,.105,.56,.105,0,0,-.38);hornR.rotation.z=-.48;
+  // Side helmet fins and engraved cheek plates.
+  for(const side of [-1,1]){
+    plate(body,[[0,.16],[.18,.04],[.13,-.18],[0,-.26],[-.04,-.04]],steelLight,side*.24,2.19,.12,.035);
+    add(body,cone,blackSteel,side*.31,2.35,-.04,.08,.32,.08,0,0,side*-.65);
+  }
+  // Massive layered pauldrons, gold edges, spikes and articulated arms.
+  for(const side of [-1,1]){
+    const sh= new THREE.Group();sh.position.set(side*.48,1.91,0);body.add(sh);
+    add(sh,sphere,blackSteel,0,0,0,.34,.27,.34);
+    add(sh,sphere,steel,0,.035,.025,.31,.23,.31);
+    plate(sh,[[-.29,.04],[-.2,.24],[0,.34],[.2,.24],[.3,.04],[.14,-.1],[0,-.17],[-.14,-.1]],gold, -.29,-.12,.22,.035);
+    add(sh,cone,goldBright,side*.04,.24,-.02,.12,.42,.12,0,0,side*-.12);
+    add(sh,cone,steelLight,side*.25,.04,-.03,.1,.27,.1,0,0,side*-.7);
+    const arm=new THREE.Group();arm.position.set(side*.51,1.48,.015);body.add(arm);
+    add(arm,cyl,blackSteel,0,0,0,.145,.53,.15,0,0,side*-.08);
+    add(arm,cyl,steel,0,-.03,.015,.15,.35,.155,0,0,side*-.08);
+    add(arm,sphere,gold,0,-.25,.02,.17,.13,.17);
+    add(arm,sphere,steelLight,0,-.36,.045,.16,.16,.17);
+    // forearm vambrace
+    plate(arm,[[-.12,.18],[-.1,-.08],[0,-.2],[.1,-.08],[.12,.18],[0,.26]],gold,-.12,-.19,.16,.035);
+    // thighs, greaves, knee caps and armored boots
+    add(body,cyl,blackSteel,side*.22,.66,0,.19,.66,.2,0,0,side*-.025);
+    add(body,cyl,steel,side*.22,.64,.025,.17,.46,.19,0,0,side*-.025);
+    add(body,sphere,gold,side*.22,.43,.19,.18,.15,.075);
+    plate(body,[[-.13,.18],[0,.27],[.13,.18],[.1,-.12],[0,-.2],[-.1,-.12]],gold,side*.22,.48,.18,.03);
+    add(body,sphere,blackSteel,side*.22,.19,.12,.21,.18,.31);
+    add(body,sphere,steel,side*.22,.16,.2,.2,.11,.25);
+    // gold toe cap
+    plate(body,[[-.16,.05],[0,.13],[.16,.05],[.12,-.08],[-.12,-.08]],gold,side*.22,.08,.37,.035);
+  }
+  // Long crimson war-cape, flared behind the armor; double-sided for mobile view.
+  const capeShape=new THREE.Shape();
+  capeShape.moveTo(-.31,1.98);capeShape.quadraticCurveTo(-.48,1.3,-.66,.55);
+  capeShape.quadraticCurveTo(-.5,.35,-.3,.48);capeShape.lineTo(0,.36);
+  capeShape.lineTo(.3,.48);capeShape.quadraticCurveTo(.5,.35,.66,.55);
+  capeShape.quadraticCurveTo(.48,1.3,.31,1.98);capeShape.quadraticCurveTo(0,1.84,-.31,1.98);
+  const capeGeo=new THREE.ShapeGeometry(capeShape,12);
+  const cape=new THREE.Mesh(capeGeo,capeMat);cape.position.set(0,0,-.31);cape.rotation.x=-.08;cape.castShadow=true;body.add(cape);
+  // Cape gold clasp and edge piping.
+  add(body,sphere,goldBright,0,1.91,-.34,.16,.12,.07);
+  const capeTrimMat=mat(0xb88639,.7,.3);
+  for(const side of [-1,1]){
+    const trim=add(body,new THREE.BoxGeometry(.025,1.42,.025),capeTrimMat,side*.46,1.19,-.29,1,1,1,0,0,side*side*.1);
+  }
+  // Greatsword in the right hand: dark gold hilt and glowing violet blade.
+  const sword=new THREE.Group();sword.position.set(.72,1.12,.22);sword.rotation.z=-.18;body.add(sword);
+  box(sword,blackSteel,0,0,0,.12,.48,.12);
+  box(sword,goldBright,0,.02,.07,.23,.075,.12);
+  add(sword,sphere,goldBright,0,-.28,0,.14,.14,.14);
+  // broad tapered crystal blade
+  plate(sword,[[-.13,.19],[-.19,.72],[-.12,1.35],[0,1.58],[.12,1.35],[.19,.72],[.13,.19]],darkPurple,-.13,.16,.015,.07);
+  plate(sword,[[-.09,.22],[-.13,.75],[-.08,1.32],[0,1.49],[.08,1.32],[.13,.75],[.09,.22]],purpleBlade,-.09,.18,.095,.025);
+  box(sword,gold,0,.2,.04,.37,.07,.16);
+  add(sword,cone,goldBright,0,1.67,.04,.09,.2,.09,0,0,Math.PI);
+  // Small runic lights and back-mounted armor studs.
+  for(let i=0;i<5;i++){
+    const y=1.18+i*.16;
+    add(body,sphere,goldBright,0,y,-.39,.035,.035,.025);
+  }
+  const aura=new THREE.Mesh(new THREE.TorusGeometry(.9,.035,8,48),glow);
+  aura.rotation.x=Math.PI/2;aura.position.y=.04;root.add(aura);
+  const aura2=new THREE.Mesh(new THREE.TorusGeometry(1.17,.012,6,48),purple);
+  aura2.rotation.x=Math.PI/2;aura2.position.y=.045;root.add(aura2);
+  root.userData={wingMeshes:[],aura,cape,sword,body};
   return root;
 }
 const player=makeHalpas(); player.position.set(0,0,0);
@@ -202,7 +275,9 @@ function animate(){
   if(v.lengthSq()>.01){player.position.addScaledVector(v,speed*dt);player.rotation.y=Math.atan2(v.x,v.z);}
   player.position.x=THREE.MathUtils.clamp(player.position.x,-25,25);player.position.z=THREE.MathUtils.clamp(player.position.z,-25,25);
   player.position.y=Math.sin(t*3)*.025;
-  player.userData.wingMeshes.forEach((w,i)=>{w.rotation.y=(i%2?1:-1)*(.12+Math.sin(t*5)*.12);});
+  player.userData.cape.rotation.y=Math.sin(t*2.2)*.045;
+  player.userData.cape.rotation.z=Math.sin(t*3.1)*.025;
+  player.userData.sword.rotation.z=-.18+Math.sin(t*2.8)*.025;
   player.userData.aura.rotation.z=t*.8;
   if(autoAttack&&attackCooldown<=0){const e=nearestEnemy();if(e&&e.mesh.position.distanceTo(player.position)<3.1)attack();}
   for(const e of [...enemies]){

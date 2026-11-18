@@ -110,24 +110,25 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
 
  // No dragon wings: keep the original-inspired cape silhouette clear.
  // Long crimson mantle, layered with dark inner fold and gold hem.
- path([[-10,-34],[10,-34],[15,-17+sway],[20,8+sway], [7,13+sway],[-7,12-sway],[-20,7-sway],[-15,-17]],
-      "#360d20","#b33c55",1.5);
- path([[-7,-32],[7,-32],[11,-16+sway],[13,5+sway],[4,9+sway],[-5,8-sway],[-13,4-sway],[-10,-16]],
-      "#9b1938","#e05a70",1);
+ path([[-11,-35],[11,-35],[17,-16+sway],[23,15+sway],[12,21+sway],[3,18+sway],[-5,21-sway],[-15,17-sway],[-23,13-sway],[-17,-16]],
+      "#260a19","#b33c55",1.7);
+ path([[-8,-33],[8,-33],[13,-15+sway],[17,12+sway],[10,17+sway],[3,14+sway],[-5,17-sway],[-13,13-sway],[-17,10-sway],[-13,-15]],
+      "#8d1734","#e05a70",1.1);
  path([[-13,-15],[-9,-10+sway],[0,-7+sway],[9,-10+sway],[14,-15]],
       null,"#e3b65d",1.2);
  // Layered fabric folds and a soft red highlight make the cape read as cloth.
- path([[-10,-27],[-6,-16+sway],[-8,5+sway]],null,"#d34d68",1.1);
- path([[1,-28],[3,-14+sway],[5,8+sway]],null,"#e45b70",1.0);
- path([[8,-25],[10,-13+sway],[12,4+sway]],null,"#6c142d",1.2);
+ path([[-13,-27],[-9,-14+sway],[-13,15+sway]],null,"#d34d68",1.2);
+ path([[-3,-29],[0,-13+sway],[1,18+sway]],null,"#f07885",1.1);
+ path([[7,-28],[10,-13+sway],[13,16+sway]],null,"#6c142d",1.3);
+ path([[15,-23],[17,-8+sway],[20,12+sway]],null,"#d34d68",.9);
  // Soft central fabric sheen and darker side folds add cloth depth.
  ctx.save();ctx.globalAlpha=.34;
  const cloth=ctx.createLinearGradient(-15,-20,15,5+sway);
  cloth.addColorStop(0,"#4b1028");cloth.addColorStop(.48,"#f06a7b");cloth.addColorStop(1,"#4a0c25");
- path([[-8,-29],[0,-31],[8,-29],[12,5+sway],[4,9+sway],[-5,8-sway],[-13,4-sway]],cloth);
+ path([[-9,-30],[0,-32],[9,-30],[17,13+sway],[10,18+sway],[3,15+sway],[-5,18-sway],[-15,13-sway],[-18,9-sway]],cloth);
  ctx.restore();
  // Cloak center seam and clasp.
- ctx.strokeStyle="#e4b75f";ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(0,7+sway);ctx.stroke();
+ ctx.strokeStyle="#e4b75f";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(1,17+sway);ctx.stroke();
  ellipse(0,-33,4.2,3.3,"#f4d27b","#79501f",1);
 
  // Armored legs and heavy boots with gold toe plates.
@@ -137,12 +138,18 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  path([[5,9],[15,9],[18,17],[5,18]],"#090d17","#d2a34f",1.4);
  path([[-13,11],[-6,11],[-6,14],[-14,14]],"#b88a3e");
  path([[7,11],[14,11],[15,14],[7,14]],"#b88a3e");
+ path([[-15,9],[-5,9],[-4,11],[-14,11]],null,"#ffe29a",.8);
+ path([[5,9],[15,9],[16,11],[6,11]],null,"#ffe29a",.8);
 
- // Torso silhouette and layered breastplate.
- path([[-15,-33],[-11,-40],[0,-43],[11,-40],[15,-33],[13,-10],[8,-3],[-8,-3],[-13,-10]],
-      "#101522","#8d70ed",1.8);
- path([[-11,-32],[-7,-38],[0,-40],[7,-38],[11,-32],[9,-12],[0,-7],[-9,-12]],
-      "#242039","#d4a44e",1.1);
+ // Torso silhouette and layered breastplate with shaded metal bevels.
+ const armorShade=ctx.createLinearGradient(-16,-38,16,-5);
+ armorShade.addColorStop(0,"#080d18");armorShade.addColorStop(.38,"#303044");armorShade.addColorStop(.72,"#171a2c");armorShade.addColorStop(1,"#080b15");
+ path([[-16,-33],[-12,-41],[0,-44],[12,-41],[16,-33],[14,-10],[8,-2],[-8,-2],[-14,-10]],
+      armorShade,"#b48b4b",1.8);
+ path([[-12,-32],[-8,-39],[0,-41],[8,-39],[12,-32],[10,-12],[0,-7],[-10,-12]],
+      "#242039","#e0b65e",1.25);
+ path([[-10,-31],[-7,-37],[0,-39],[7,-37],[10,-31],[8,-13],[0,-9],[-8,-13]],
+      null,"rgba(255,230,165,.38)",.8);
  path([[-7,-32],[0,-37],[7,-32],[6,-18],[0,-13],[-6,-18]],
       "#171629","#8565d8",1.1);
  path([[-4,-31],[0,-34],[4,-31],[3,-21],[-3,-21]],"#4a3268","#c7a0ff",.8);
@@ -156,10 +163,12 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  path([[-2,-25],[0,-28],[2,-25],[0,-21]],"#d84d6d","#ffd0df",.6);
 
  // Shoulder pauldrons: layered gold rims over dark steel.
- ellipse(-14,-31,7,6,"#282337","#e2b65d",1.6);
- ellipse(14,-31,7,6,"#282337","#e2b65d",1.6);
- path([[-20,-32],[-18,-42],[-12,-39],[-9,-32],[-14,-27]],"#a77732","#f6d987",1.1);
- path([[20,-32],[18,-42],[12,-39],[9,-32],[14,-27]],"#a77732","#f6d987",1.1);
+ ellipse(-14,-31,7.5,6.5,"#171a28","#f0c66d",1.8);
+ ellipse(14,-31,7.5,6.5,"#171a28","#f0c66d",1.8);
+ path([[-21,-32],[-18,-43],[-12,-40],[-8,-32],[-14,-26]],"#76502a","#f6d987",1.3);
+ path([[21,-32],[18,-43],[12,-40],[8,-32],[14,-26]],"#76502a","#f6d987",1.3);
+ path([[-18,-35],[-16,-40],[-12,-37],[-10,-33]],null,"#fff0bb",1);
+ path([[18,-35],[16,-40],[12,-37],[10,-33]],null,"#fff0bb",1);
  path([[-18,-34],[-16,-39],[-13,-36]],"#f8dc91");
  path([[18,-34],[16,-39],[13,-36]],"#f8dc91");
 

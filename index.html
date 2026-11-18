@@ -3,50 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#090b12">
+  <meta name="theme-color" content="#08090d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>解放的哈爾巴斯：覺醒 FINAL 7.0</title>
-  <link rel="stylesheet" href="./style.css?v=final-7-0">
+  <title>解放的哈爾巴斯 FINAL 8.0</title>
+  <link rel="stylesheet" href="./style.css?v=final-8-0">
 </head>
 <body>
-  <div id="game"><canvas id="world"></canvas></div>
-  <div id="hud">
-    <header class="topbar">
-      <div class="brand">解放的哈爾巴斯 <small>FINAL 7.0・八方向骨架動畫</small></div>
-      <div class="stats">
-        <div class="stat"><span>HP</span><div class="bar"><i id="hpBar"></i></div><b id="hpText">100/100</b></div>
-        <div class="stat"><span>MP</span><div class="bar mana"><i id="mpBar"></i></div><b id="mpText">60/60</b></div>
-        <div class="stat"><span>EXP</span><div class="bar exp"><i id="xpBar"></i></div><b id="levelText">Lv.1</b></div>
-      </div>
-    </header>
-    <div class="right-info"><div>擊殺 <b id="kills">0</b></div><div>波次 <b id="wave">1</b></div></div>
-    <div id="message">2D／2.5D 角色風格・拖曳搖桿移動</div>
-    <div class="bottom-ui">
+  <main id="game">
+    <canvas id="world"></canvas>
+    <div class="top-hud">
+      <section class="profile">
+        <div class="crest">♛</div>
+        <div><strong>解放的哈爾巴斯</strong><small>FINAL 8.0 · 暗黑戰場重製</small><b id="levelText">Lv.1</b></div>
+      </section>
+      <section class="resource-panel">
+        <div class="resource hp"><span>HP</span><i><b id="hpBar"></b></i><strong id="hpText">100/100</strong></div>
+        <div class="resource mp"><span>MP</span><i><b id="mpBar"></b></i><strong id="mpText">60/60</strong></div>
+        <div class="resource exp"><span>EXP</span><i><b id="xpBar"></b></i><strong id="xpText">0%</strong></div>
+      </section>
+      <section class="currency"><span>💎 522</span><span>🪙 18,760,430</span></section>
+      <div class="top-icons"><span>商店</span><span>技能</span><span>任務</span><span>☰</span></div>
+    </div>
+    <div class="buff-row"><span>BUFF</span><b>✦</b><b>♜</b><b>✧</b><b>❖</b><b>✹</b><b>✦</b></div>
+    <div class="mapbox"><div class="map-title">古代巨人墓地</div><canvas id="minimap" width="116" height="92"></canvas></div>
+    <div class="battle-info"><div>WAVE <b id="wave">1</b></div><div>擊殺 <b id="kills">0</b></div></div>
+    <div id="message">哈爾巴斯覺醒 · 暗黑戰場</div>
+    <div class="bottom-hud">
       <div class="left-controls">
         <div id="joystick" aria-label="移動搖桿"><div id="stick"></div></div>
         <span class="hint">拖曳移動</span>
       </div>
+      <div class="hotbar">
+        <button id="attackBtn" class="hotkey sword" aria-label="普通攻擊"><span>⚔</span><small>普通攻擊</small></button>
+        <button id="skillBtn" class="hotkey purple" aria-label="哈爾巴斯爆炎"><span>✦</span><small>哈爾巴斯爆炎</small></button>
+        <button id="burstBtn" class="hotkey violet" aria-label="紫炎斬"><span>✧</span><small>紫炎斬</small></button>
+        <button id="potionBtn" class="hotkey potion" aria-label="生命藥水"><span>🧪</span><small>生命藥水</small></button>
+      </div>
       <div class="right-controls">
-        <button id="autoBtn" class="toggle active">自動攻擊：開</button>
-        <button id="attackBtn" class="action">普通攻擊</button>
-        <button id="skillBtn" class="skill">哈爾巴斯爆炎</button>
+        <button id="autoBtn" class="toggle active">AUTO：開</button>
+        <button id="lockBtn" class="lock" aria-label="鎖定目標">◎</button>
       </div>
     </div>
+    <div class="footer-exp"><span>EXP <b id="footerXp">0.00%</b></span><i><b id="footerXpBar"></b></i></div>
     <div id="levelUp" class="modal hidden">
       <div class="panel"><h2>力量覺醒</h2><p>選擇一項能力提升</p>
         <div class="choices">
-          <button data-up="power">攻擊力 +25%</button>
-          <button data-up="health">最大生命 +30</button>
-          <button data-up="speed">移動速度 +15%</button>
+          <button data-up="power">紫炎攻擊強化　+25%</button>
+          <button data-up="health">生命上限提升　+30</button>
+          <button data-up="speed">移動速度提升　+15%</button>
         </div>
       </div>
     </div>
     <div id="gameOver" class="modal hidden">
       <div class="panel"><h2>哈爾巴斯暫時沉眠</h2><p id="finalStats"></p><button id="restartBtn" class="action">重新覺醒</button></div>
     </div>
-  </div>
-  <script src="./main.js?v=final-7-0"></script>
+  </main>
+  <script src="./main.js?v=final-8-0"></script>
 </body>
 </html>

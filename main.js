@@ -3,6 +3,8 @@
 
 // V3: 2D/2.5D isometric sprite-style prototype based on the user's supplied
 // gameplay video. Original canvas artwork; not extracted game assets.
+document.addEventListener("contextmenu",e=>e.preventDefault());
+document.addEventListener("selectstart",e=>e.preventDefault());
 const canvas = document.getElementById("world");
 const ctx = canvas.getContext("2d", { alpha: false });
 let W=0,H=0,DPR=1;
@@ -13,7 +15,10 @@ function resize(){
   canvas.style.width=W+"px"; canvas.style.height=H+"px";
   ctx.setTransform(DPR,0,0,DPR,0,0);
 }
-addEventListener("resize",resize); resize();
+addEventListener("resize",resize);
+addEventListener("orientationchange",resize);
+if(window.visualViewport) window.visualViewport.addEventListener("resize",resize);
+resize();
 
 const ui={
  hpBar:document.querySelector("#hpBar"),mpBar:document.querySelector("#mpBar"),xpBar:document.querySelector("#xpBar"),
@@ -98,7 +103,7 @@ function drawAura(x,y,r,color,alpha=1){
  ctx.beginPath();ctx.ellipse(x,y,r*.88,r*.36,0,0,Math.PI*2);ctx.stroke();
  ctx.restore();
 }
-function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
+function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
  const bob=Math.sin(phase*7)*1.35;
  const sway=Math.sin(phase*3.1)*4.4 + Math.sin(phase*1.7)*1.4;
@@ -230,6 +235,12 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  ctx.globalAlpha=.18+.12*Math.sin(phase*2.2);
  ctx.strokeStyle="#ffe3a0";ctx.lineWidth=.9;
  ctx.beginPath();ctx.moveTo(-17,-33);ctx.lineTo(-12,-29);ctx.moveTo(17,-33);ctx.lineTo(12,-29);ctx.stroke();
+ // Short red impact rim when the character takes damage.
+ if(hit>0){
+  ctx.save();ctx.globalAlpha=clamp(hit/.2,0,1)*.72;ctx.strokeStyle="#ff5268";
+  ctx.shadowColor="#ff334f";ctx.shadowBlur=16;ctx.lineWidth=2.2;
+  ctx.beginPath();ctx.ellipse(0,-26,24,39,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+ }
  ctx.restore();
 }
 function drawEnemy(e){
@@ -329,7 +340,7 @@ function draw(){
  const actors=enemies.map(e=>({y:e.x+e.y,draw:()=>drawEnemy(e)}));
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
-  drawHalpas(p.x,p.y,1.38,player.walk+time,player.faceX,player.faceY,player.attack>0?1:0);
+  drawHalpas(p.x,p.y,1.38,player.walk+time,player.faceX,player.faceY,player.attack>0?1:0,player.hit);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 
@@ -352,7 +363,7 @@ function tick(now){
  const dt=Math.min((now-last)/1000,.04);last=now;time+=dt;
  if(!paused&&!gameEnded){
   attackCooldown=Math.max(0,attackCooldown-dt);skillCooldown=Math.max(0,skillCooldown-dt);invuln=Math.max(0,invuln-dt);
-  player.attack=Math.max(0,player.attack-dt);mp=Math.min(maxMp,mp+dt*2.1);
+  player.attack=Math.max(0,player.attack-dt);player.hit=Math.max(0,player.hit-dt);mp=Math.min(maxMp,mp+dt*2.1);
   let dx=joy.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
   let dy=joy.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
   const len=Math.hypot(dx,dy);if(len>1){dx/=len;dy/=len;}

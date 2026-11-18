@@ -3,25 +3,25 @@ html,body,#game{margin:0;width:100%;height:100%;height:100dvh;overflow:hidden;ov
 #world{display:block;width:100%;height:100%;height:100dvh;touch-action:none}
 #hud{position:fixed;inset:0;pointer-events:none}
 .topbar{position:absolute;top:env(safe-area-inset-top,8px);left:10px;right:10px;display:flex;align-items:flex-start;gap:9px}
-.brand{font-weight:900;font-size:14px;text-shadow:0 2px 6px #000;white-space:nowrap;padding:8px 9px;background:#101522df;border:1px solid #68718a66;border-radius:10px}
-.brand small{display:block;font-size:9px;color:#b7c1d8;font-weight:500}
+.brand{font-weight:900;font-size:clamp(13px,3.2vw,16px);text-shadow:0 2px 6px #000;white-space:nowrap;padding:8px 9px;background:#101522df;border:1px solid #68718a66;border-radius:10px}
+.brand small{display:block;font-size:clamp(9px,2.2vw,11px);color:#b7c1d8;font-weight:500}
 .stats{flex:1;max-width:350px;padding:7px 9px;background:#101522e8;border:1px solid #68718a66;border-radius:10px}
-.stat{display:flex;align-items:center;gap:6px;font-size:10px;margin:2px 0}
-.stat span{width:25px;color:#d5d9e5}.stat b{font-size:10px;min-width:48px;text-align:right}
-.bar{height:7px;background:#343846;border-radius:9px;overflow:hidden;flex:1}
+.stat{display:flex;align-items:center;gap:6px;font-size:clamp(10px,2.5vw,12px);margin:2px 0}
+.stat span{width:25px;color:#d5d9e5}.stat b{font-size:clamp(10px,2.5vw,12px);min-width:48px;text-align:right}
+.bar{height:clamp(7px,1.8vw,9px);background:#343846;border-radius:9px;overflow:hidden;flex:1}
 .bar i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#9b2439,#ff5267);border-radius:9px}
 .bar.mana i{background:linear-gradient(90deg,#155caa,#4ac5ff)}
 .bar.exp i{background:linear-gradient(90deg,#7a4bb4,#d7a2ff);width:0}
 .right-info{position:absolute;right:12px;top:92px;background:#101522df;padding:8px 12px;border-radius:10px;border:1px solid #68718a66;font-size:12px;line-height:1.8}
 .right-info b{color:#ffd58c;margin-left:7px}
-#message{position:absolute;top:105px;left:50%;transform:translateX(-50%);background:#101522d9;border:1px solid #8b789b77;padding:7px 12px;border-radius:20px;font-size:10px;white-space:nowrap;text-shadow:0 1px 3px #000;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+#message{position:absolute;top:clamp(100px,13vh,125px);left:50%;transform:translateX(-50%);background:#101522d9;border:1px solid #8b789b77;padding:7px 12px;border-radius:20px;font-size:clamp(10px,2.6vw,12px);white-space:nowrap;text-shadow:0 1px 3px #000;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
 .bottom-ui{position:absolute;bottom:calc(env(safe-area-inset-bottom,8px) + 12px);left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 14px}
 .left-controls{display:flex;flex-direction:column;align-items:center;gap:4px}
 #joystick{width:116px;height:116px;border-radius:50%;background:#c7d3ec22;border:2px solid #d9e4ff55;position:relative;pointer-events:auto;touch-action:none;box-shadow:0 4px 18px #0008}
 #stick{position:absolute;width:48px;height:48px;left:32px;top:32px;border-radius:50%;background:linear-gradient(145deg,#e5e9f4dd,#7585a5dd);border:2px solid #fff9;box-shadow:0 3px 10px #0008}
 .hint{font-size:10px;color:#d5d9e5;text-shadow:0 1px 3px #000}
 .right-controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:auto}
-button{border:1px solid #ffffff66;color:white;font-weight:800;border-radius:13px;padding:11px 15px;background:#252d40ed;box-shadow:0 4px 12px #0008;font-size:12px;touch-action:manipulation}
+button{border:1px solid #ffffff66;color:white;font-weight:800;border-radius:13px;padding:11px 15px;background:#252d40ed;box-shadow:0 4px 12px #0008;font-size:clamp(12px,3vw,14px);touch-action:manipulation}
 button:active{transform:scale(.96);filter:brightness(1.25)}
 button.action{background:linear-gradient(135deg,#a82d3f,#5c1529);min-width:120px}
 button.skill{background:linear-gradient(135deg,#7135a8,#321c68);min-width:145px;border-color:#d3a4ff}

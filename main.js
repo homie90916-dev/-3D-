@@ -30,7 +30,7 @@ let hp=100,maxHp=100,mp=60,maxMp=60,xp=0,level=1,kills=0,wave=1,power=1,moveSpee
 let autoAttack=true,attackCooldown=0,skillCooldown=0,invuln=0,paused=false,gameEnded=false;
 const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false,deadAt:0};
 let screenShake=0;
-const enemies=[],particles=[],slashes=[],runes=[];
+const enemies=[],particles=[],slashes=[],runes=[],damageTexts=[];
 const joy={x:0,y:0,active:false}; const keys={};
 let last=performance.now(),time=0,spawnTimer=0;
 
@@ -108,7 +108,7 @@ function drawAura(x,y,r,color,alpha=1){
 // The sheet is a newly-created 2D animation interpretation guided by the supplied
 // official appearance image and gameplay recording; it is not extracted game data.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-5-2";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-5-3";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0,dead=0){
@@ -121,7 +121,7 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
  ctx.shadowColor="#293fff"; ctx.shadowBlur=24;
  ellipse(0,9,35,11,"#202d88");
  ctx.restore();
- drawAura(0,9,35,"#536cff",.94);
+ drawAura(0,9,38,"#536cff",.94);
 
  if(halpasSheetReady){
   const cols=4, rows=4, cellW=halpasSheet.naturalWidth/cols, cellH=halpasSheet.naturalHeight/rows;
@@ -145,7 +145,7 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
   }
   const sx=frame*cellW, sy=row*cellH;
   // Fixed frame box keeps the feet planted on the blue ring while each pose changes.
-  const h=194*scale, w=h*(cellW/cellH);
+  const h=210*scale, w=h*(cellW/cellH);
   const attackProgress=attack>0?1-attack/.68:0;
   const attackNudge=attack>0?Math.sin(attackProgress*Math.PI)*5.2:0;
   ctx.save();
@@ -199,18 +199,36 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
  ctx.restore();
 }
 function drawEnemy(e){
- const p=screenPos(e.x,e.y), bob=Math.sin(time*5+e.phase)*1.5;
+ const p=screenPos(e.x,e.y), bob=Math.sin(time*5.2+e.phase)*2.0;
  ctx.save();ctx.translate(p.x,p.y);
- ellipse(0,7,14,6,"rgba(0,0,0,.4)");
- // small dark red goblin-like monster
- path([[-9,-5],[-10,-17],[-5,-24],[5,-24],[10,-16],[9,-4],[4,2],[-5,2]],"#451b28","#a94b55",1.2);
- ellipse(0,-24+bob,8,8,"#682c39","#b9565c",1);
- path([[-7,-27],[-11,-37],[-2,-31]],"#c84c3c","#ff8a55",.8);
- path([[7,-27],[11,-37],[2,-31]],"#c84c3c","#ff8a55",.8);
- roundedRect(-4,-25,8,2,1,"#ff4a61");
+ ctx.save();ctx.globalAlpha=.42;ctx.shadowColor="#e23b62";ctx.shadowBlur=10;
+ ellipse(0,8,16,6,"rgba(0,0,0,.62)");ctx.restore();
+ ctx.save();ctx.globalAlpha=.16;ctx.shadowColor="#ff365f";ctx.shadowBlur=13;
+ ellipse(0,3,11,4,"#a62949");ctx.restore();
+ const legSwing=Math.sin(time*7+e.phase)*2.1;
+ path([[-5,-5],[-7+legSwing,-1],[-4,2],[-1,1],[-2,-5]],"#321722","#8e4053",.8);
+ path([[2,-5],[4-legSwing,-1],[7,2],[9,0],[6,-6]],"#321722","#8e4053",.8);
+ const bodyGrad=ctx.createLinearGradient(-10,-30,10,3);
+ bodyGrad.addColorStop(0,"#a3455b");bodyGrad.addColorStop(.45,"#6c293e");bodyGrad.addColorStop(1,"#351522");
+ path([[-9,-9],[-10,-22],[-7,-30],[0,-33],[7,-30],[10,-21],[9,-9],[4,-3],[-5,-3]],bodyGrad,"#d36b7b",1.35);
+ path([[-5,-17],[0,-21],[5,-17],[4,-8],[-4,-8]],"#4a1c30","#9b4861",.8);
+ ellipse(-8,-24+bob*.2,3.1,4.2,"#7d3449","#d06b78",.8);
+ ellipse(8,-24+bob*.2,3.1,4.2,"#7d3449","#d06b78",.8);
+ const headGrad=ctx.createRadialGradient(-3,-35+bob,1,0,-31+bob,12);
+ headGrad.addColorStop(0,"#b85b68");headGrad.addColorStop(.62,"#773044");headGrad.addColorStop(1,"#3b1828");
+ ellipse(0,-31+bob,9.3,9.5,headGrad,"#d47780",1.15);
+ path([[-6,-35+bob],[-12,-45+bob],[-3,-40+bob]],"#bd4d43","#ff9361",1);
+ path([[6,-35+bob],[12,-45+bob],[3,-40+bob]],"#bd4d43","#ff9361",1);
+ ctx.save();ctx.shadowColor="#ff365f";ctx.shadowBlur=7;
+ roundedRect(-5,-33+bob,3.5,1.8,.8,"#ff7890");
+ roundedRect(1.5,-33+bob,3.5,1.8,.8,"#ff7890");
+ ctx.restore();
+ roundedRect(-3,-27+bob,6,1.4,.6,"#2a101e");
+ ctx.save();ctx.globalAlpha=.7;ctx.fillStyle="#f2a0b1";ctx.shadowColor="#ff5279";ctx.shadowBlur=5;
+ ellipse(0,-39+bob,1.2,1.2,ctx.fillStyle);ctx.restore();
  if(e.hp<e.maxHp){
-  roundedRect(-12,-43,24,3,2,"#24131b");
-  roundedRect(-12,-43,24*clamp(e.hp/e.maxHp,0,1),3,2,"#d84a5b");
+  roundedRect(-13,-51+bob,26,4,2,"#1c1019");
+  roundedRect(-12.5,-50.5+bob,25*clamp(e.hp/e.maxHp,0,1),3,1.5,"#f05270");
  }
  ctx.restore();
 }
@@ -227,7 +245,9 @@ function addBurst(x,y,color="#a78bff",count=16,power=1){
  }
 }
 function damageEnemy(e,amount){
- e.hp-=amount;addBurst(e.x,e.y,"#ff789e",8,.7);
+ e.hp-=amount;
+ damageTexts.push({x:e.x,y:e.y,amount:Math.round(amount),life:.72,max:.72,color:"#ffe0a1"});
+ addBurst(e.x,e.y,"#ff789e",8,.7);
  if(e.hp<=0){
   const idx=enemies.indexOf(e);if(idx>=0)enemies.splice(idx,1);
   kills++;xp+=25;
@@ -330,6 +350,14 @@ function draw(){
   const p=screenPos(pt.x,pt.y);ctx.save();ctx.globalAlpha=clamp(pt.life/pt.max,0,1);ctx.fillStyle=pt.color;ctx.shadowColor=pt.color;ctx.shadowBlur=8;
   ellipse(p.x,p.y,pt.size,pt.size,pt.color);ctx.restore();
  }
+ for(const d of damageTexts){
+  const p=screenPos(d.x,d.y), rise=(1-d.life/d.max)*25;
+  ctx.save();ctx.globalAlpha=clamp(d.life/d.max,0,1);
+  ctx.font="900 13px system-ui, sans-serif";ctx.textAlign="center";
+  ctx.lineWidth=3;ctx.strokeStyle="rgba(28,12,25,.9)";ctx.strokeText(String(d.amount),p.x,p.y-42-rise);
+  ctx.fillStyle=d.color;ctx.shadowColor="#ff9a55";ctx.shadowBlur=8;
+  ctx.fillText(String(d.amount),p.x,p.y-42-rise);ctx.restore();
+ }
 }
 function tick(now){
  const dt=Math.min((now-last)/1000,.04);last=now;time+=dt;
@@ -376,6 +404,7 @@ function tick(now){
   for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);
   for(const a of runes)a.life-=dt;for(let i=runes.length-1;i>=0;i--)if(runes[i].life<=0)runes.splice(i,1);
   for(const a of slashes)a.life-=dt;for(let i=slashes.length-1;i>=0;i--)if(slashes[i].life<=0)slashes.splice(i,1);
+  for(const d of damageTexts)d.life-=dt;for(let i=damageTexts.length-1;i>=0;i--)if(damageTexts[i].life<=0)damageTexts.splice(i,1);
   updateUI();
  }
  draw();requestAnimationFrame(tick);

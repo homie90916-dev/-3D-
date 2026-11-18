@@ -1,30 +1,18 @@
-解放的哈爾巴斯 FINAL 5.2
+解放的哈爾巴斯 FINAL 5.3
 
-以 FINAL 5.1 為基礎，保留原有 iPhone Safari 介面、虛擬搖桿、鍵盤控制、怪物追擊、自動攻擊、普通攻擊、哈爾巴斯爆炎、HP/MP/EXP、波次及升級選擇。
+依照使用者提供的 2026-11-19 iPhone Safari 實機錄影，針對戰鬥畫面精緻度修整。
 
-FINAL 5.2 改進：
-- 披風側使用獨立裁切區域加上細微左右擺動，身體及武器保持穩定。
-- 怪物追擊停止距離由 0.72 調整至 1.12，減少怪物疊在角色腳部及定位光圈上。
-- 普通攻擊增加雙層紫色斬擊軌跡及更明顯的命中粒子。
-- 爆炎地面法陣增加內外雙環、12 個旋轉刻度。
-- 受擊時增加短暫後仰感、紅色粒子及畫面震動。
-- HP 歸零時加入角色傾斜、下沉及淡出效果。
-- 更新快取版本號，避免 Safari 沿用舊版檔案。
+改善：
+- 怪物外觀改為多層漸層上色，補上身體甲片、手腳、尖耳、發光眼睛與額頭符文。
+- 怪物待機與移動增加細微擺動，受傷血條更清楚。
+- 命中時顯示浮動傷害數字。
+- 哈爾巴斯角色略微放大，提升手機畫面辨識度。
+- 手機 HUD 字級依螢幕寬度微調。
+- 保留原有 4x4 哈爾巴斯動作序列、披風擺動、普通攻擊、爆炎技能、怪物追擊、搖桿與鍵盤操作。
 
-檔案：
-- index.html
-- main.js
-- style.css
-- halpas_animated_sprites.png
-- halpas_original_cutout.png
-- README.txt
+檔案：index.html、main.js、style.css、halpas_animated_sprites.png、halpas_original_cutout.png、README.txt
 
-iPhone / GitHub Pages 更新：
-1. 解壓縮 ZIP。
-2. GitHub 儲存庫 -> Add file -> Upload files。
-3. 上傳以上六個檔案並覆蓋同名檔案。
-4. Commit changes，等待 GitHub Pages workflow 成功。
-5. 關閉舊分頁後重新開啟：
-   https://homie90916-dev.github.io/-3D-/?v=final-5-2
+更新方式：解壓縮後，將六個檔案上傳到 GitHub 儲存庫根目錄並覆蓋同名檔案，Commit changes，等待 Pages 部署成功。
+測試網址：https://homie90916-dev.github.io/-3D-/?v=final-5-3
 
-說明：角色動畫為依據使用者提供的外觀與實機錄影重新製作的 2D 動畫詮釋，非天堂 M 官方原始動畫或 3D 模型。
+注意：此版本是原創 2D 動畫詮釋，不是天堂 M 官方模型或原始動畫。

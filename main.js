@@ -102,7 +102,6 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
  const bob=Math.sin(phase*7)*1.35;
  const sway=Math.sin(phase*3.1)*3.2;
- const wingBeat=Math.sin(phase*2.8)*2.5;
 
  // Ground aura and soft cast shadow.
  ctx.save();ctx.globalAlpha=.25;ctx.shadowColor="#4268ff";ctx.shadowBlur=24;

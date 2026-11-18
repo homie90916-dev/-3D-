@@ -28,7 +28,7 @@ const ui={
 };
 let hp=100,maxHp=100,mp=60,maxMp=60,xp=0,level=1,kills=0,wave=1,power=1,moveSpeed=3.2;
 let autoAttack=true,attackCooldown=0,skillCooldown=0,invuln=0,paused=false,gameEnded=false;
-const player={x:0,y:0,faceX:0,faceY:-1,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false,deadAt:0};
+const player={x:0,y:0,faceX:.7071,faceY:.7071,walk:0,attack:0,attackHitTimer:0,attackTarget:null,attackHitDone:false,skillAnim:0,hit:0,moving:false,deadAt:0};
 let screenShake=0;
 const enemies=[],particles=[],slashes=[],runes=[],damageTexts=[];
 const joy={x:0,y:0,active:false}; const keys={};
@@ -108,7 +108,7 @@ function drawAura(x,y,r,color,alpha=1){
 // The sheet is a newly-created 2D animation interpretation guided by the supplied
 // official appearance image and gameplay recording; it is not extracted game data.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-5-3";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-6-0";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0,dead=0){
@@ -148,9 +148,22 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
   const h=210*scale, w=h*(cellW/cellH);
   const attackProgress=attack>0?1-attack/.68:0;
   const attackNudge=attack>0?Math.sin(attackProgress*Math.PI)*5.2:0;
+  // Convert the world-facing vector into the isometric screen direction.
+  // Eight sectors are tracked; the available character artwork is mirrored and
+  // gently foreshortened to suggest the turn without pretending to be 8 unique models.
+  const screenFacing=iso(faceX,faceY);
+  const facingAngle=Math.atan2(screenFacing.y,screenFacing.x);
+  const facingSector=((Math.round(facingAngle/(Math.PI/4))%8)+8)%8;
+  const facingLeft=screenFacing.x<-.18;
+  const facingAway=screenFacing.y<-.30;
+  const facingToward=screenFacing.y>.30;
+  const facingScaleX=facingAway?.86:(facingToward?1.035:.93);
+  const facingScaleY=facingAway?.97:(facingToward?1.015:1);
+  const facingTilt=clamp(Math.sin(facingAngle)*.055,-.055,.055);
   ctx.save();
   ctx.translate(attackNudge,-bob+dead*17);
-  ctx.rotate(dead*.24);
+  ctx.rotate(dead*.24+facingTilt);
+  ctx.scale((facingLeft?-1:1)*facingScaleX,facingScaleY);
   ctx.globalAlpha*=1-dead*.52;
   if(hit>0){ctx.globalAlpha=.78;ctx.filter="brightness(1.3) saturate(1.15)";}
   // Draw the cape-side slice with a small independent flutter; the torso and
@@ -261,13 +274,31 @@ function nearestEnemy(){
  for(const e of enemies){const n=Math.hypot(e.x-player.x,e.y-player.y);if(n<d){d=n;best=e;}}
  return best;
 }
-function attack(){
+function enemyInFacing(maxDistance=3.05){
+ const fx=player.faceX,fy=player.faceY;
+ let best=null,bestScore=Infinity;
+ for(const e of enemies){
+  const dx=e.x-player.x,dy=e.y-player.y;
+  const dist=Math.hypot(dx,dy);
+  if(dist<.05||dist>maxDistance)continue;
+  const dot=(dx*fx+dy*fy)/dist;
+  const cross=Math.abs(dx*fy-dy*fx)/dist;
+  // A narrow forward arc makes manual attacks follow the joystick's last direction.
+  if(dot<.28||cross>.78)continue;
+  const score=dist+cross*.42-dot*.18;
+  if(score<bestScore){best=e;bestScore=score;}
+ }
+ return best;
+}
+function attack(autoTarget=false){
  if(gameEnded||paused||attackCooldown>0)return;
  attackCooldown=.78;player.attack=.68;player.attackHitTimer=.29;
  player.attackHitDone=false;
- const e=nearestEnemy();
- player.attackTarget=(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.85)?e:null;
- if(player.attackTarget){
+ const e=autoTarget?nearestEnemy():enemyInFacing();
+ player.attackTarget=(e&&Math.hypot(e.x-player.x,e.y-player.y)<3.05)?e:null;
+ // Auto combat may turn toward its target. Manual attacks never override the
+ // last movement direction: the character strikes where the joystick points.
+ if(autoTarget&&player.attackTarget){
   const dx=e.x-player.x,dy=e.y-player.y,l=Math.hypot(dx,dy)||1;
   player.faceX=dx/l;player.faceY=dy/l;
  }
@@ -281,7 +312,7 @@ function castSkill(){
  for(const e of [...enemies])if(Math.hypot(e.x-player.x,e.y-player.y)<3.8)damageEnemy(e,68*power);
  updateUI();
 }
-document.querySelector("#attackBtn").addEventListener("pointerdown",e=>{e.preventDefault();attack();});
+document.querySelector("#attackBtn").addEventListener("pointerdown",e=>{e.preventDefault();attack(false);});
 document.querySelector("#skillBtn").addEventListener("pointerdown",e=>{e.preventDefault();castSkill();});
 document.querySelector("#autoBtn").addEventListener("click",e=>{
  autoAttack=!autoAttack;e.currentTarget.textContent=`自動攻擊：${autoAttack?"開":"關"}`;
@@ -305,7 +336,7 @@ joyEl.addEventListener("pointerdown",e=>{joy.active=true;joyEl.setPointerCapture
 joyEl.addEventListener("pointermove",e=>{if(joy.active)setJoy(e);});
 function resetJoy(){joy.active=false;joy.x=0;joy.y=0;stick.style.transform="translate(0,0)";}
 joyEl.addEventListener("pointerup",resetJoy);joyEl.addEventListener("pointercancel",resetJoy);
-addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if(e.key===" "){e.preventDefault();attack();}if(e.key.toLowerCase()==="q")castSkill();});
+addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if(e.key===" "){e.preventDefault();attack(false);}if(e.key.toLowerCase()==="q")castSkill();});
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 document.querySelector("#restartBtn").addEventListener("click",()=>location.reload());
 function endGame(){gameEnded=true;screenShake=0;player.deadAt=time;player.attack=0;player.skillAnim=0;ui.gameOver.classList.remove("hidden");document.querySelector("#finalStats").textContent=`等級 ${level} · 擊殺 ${kills} 隻怪物 · 抵擋 ${wave} 波`;}
@@ -343,8 +374,11 @@ function draw(){
   ctx.restore();
  }
  for(const s of slashes){
-  const p=screenPos(s.x,s.y);ctx.save();ctx.globalAlpha=s.life/s.max;ctx.strokeStyle="#d6b5ff";ctx.lineWidth=5;ctx.shadowColor="#7d65ff";ctx.shadowBlur=14;
-  ctx.beginPath();ctx.arc(p.x,p.y,23,-1.3,1.1);ctx.stroke();ctx.restore();
+  const p=screenPos(s.x,s.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(s.angle||0);
+  ctx.globalAlpha=s.life/s.max;ctx.strokeStyle="#d6b5ff";ctx.lineWidth=5;ctx.shadowColor="#7d65ff";ctx.shadowBlur=14;
+  ctx.beginPath();ctx.arc(0,0,23,-.92,.92);ctx.stroke();
+  ctx.strokeStyle="rgba(247,226,255,.82)";ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(0,0,17,-.78,.78);ctx.stroke();ctx.restore();
  }
  for(const pt of particles){
   const p=screenPos(pt.x,pt.y);ctx.save();ctx.globalAlpha=clamp(pt.life/pt.max,0,1);ctx.fillStyle=pt.color;ctx.shadowColor=pt.color;ctx.shadowBlur=8;
@@ -371,8 +405,9 @@ function tick(now){
     const target=player.attackTarget;
     if(target&&enemies.includes(target)&&Math.hypot(target.x-player.x,target.y-player.y)<3.25){
      damageEnemy(target,23*power);
-     slashes.push({x:target.x,y:target.y,life:.30,max:.30});
-     slashes.push({x:target.x+.18,y:target.y-.12,life:.20,max:.20,offset:12});
+     const sd=iso(player.faceX,player.faceY);const slashAngle=Math.atan2(sd.y,sd.x);
+     slashes.push({x:target.x,y:target.y,angle:slashAngle,life:.30,max:.30});
+     slashes.push({x:target.x+.18,y:target.y-.12,angle:slashAngle,life:.20,max:.20,offset:12});
      addBurst(target.x,target.y,"#bd8cff",16,1.0);
     } else {
      const hx=player.x+player.faceX*.9,hy=player.y+player.faceY*.9;
@@ -383,16 +418,23 @@ function tick(now){
    }
   }
   mp=Math.min(maxMp,mp+dt*2.1);
-  let dx=joy.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
-  let dy=joy.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
-  const len=Math.hypot(dx,dy);if(len>1){dx/=len;dy/=len;}
-  player.moving=Math.abs(dx)+Math.abs(dy)>.05;
+  // Joystick and keyboard directions are screen-space arrows. Convert them
+  // through the inverse isometric matrix so "up" really moves toward screen-up.
+  let sx=joy.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+  let sy=joy.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+  const inputLen=Math.hypot(sx,sy);
+  if(inputLen>1){sx/=inputLen;sy/=inputLen;}
+  let dx=sx*.6578947368+sy*1.3157894737;
+  let dy=-sx*.6578947368+sy*1.3157894737;
+  const worldLen=Math.hypot(dx,dy)||1;
+  dx/=worldLen;dy/=worldLen;
+  player.moving=inputLen>.055;
   if(player.moving){
    player.x+=dx*moveSpeed*dt;player.y+=dy*moveSpeed*dt;player.walk+=dt*8;
    player.faceX=dx;player.faceY=dy;
   } else player.walk+=dt*1.5;
   player.x=clamp(player.x,-30,30);player.y=clamp(player.y,-30,30);
-  if(autoAttack&&attackCooldown<=0){const e=nearestEnemy();if(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.75)attack();}
+  if(autoAttack&&attackCooldown<=0){const e=nearestEnemy();if(e&&Math.hypot(e.x-player.x,e.y-player.y)<2.75)attack(true);}
   for(const e of [...enemies]){
    const dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;
    if(d>1.12){e.x+=dx/d*e.speed*dt;e.y+=dy/d*e.speed*dt;}

@@ -108,13 +108,19 @@ function drawAura(x,y,r,color,alpha=1){
 // The sheet is a newly-created 2D animation interpretation guided by the supplied
 // official appearance image and gameplay recording; it is not extracted game data.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-6-0";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-6-1";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=false,skill=0,dead=0){
  ctx.save();
  ctx.translate(x,y);
- const bob = moving ? Math.abs(Math.sin(phase*4.25))*2.4 : Math.sin(phase*2.7)*1.15;
+ // Slower, fuller stride: the previous frame cadence and bounce were too fast,
+ // making the armored character look like it was shuffling in place.
+ const gait = phase * .78;
+ const bob = moving ? Math.abs(Math.sin(phase*1.22))*4.8 : Math.sin(phase*1.25)*1.05;
+ const runSway = moving ? Math.sin(phase*1.22)*3.8 : 0;
+ const runLean = moving ? -.085 : 0;
+ const runStretch = moving ? 1 + Math.sin(phase*1.22)*.018 : 1;
  // Ground shadow and blue transformation ring remain separate from the sprite.
  ctx.save();
  ctx.globalAlpha=.38;
@@ -137,8 +143,8 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
    row=2;
    frame=progress<.20?0:progress<.44?1:progress<.72?2:3;
   } else if(moving){
-   // Clear four-beat gait at a steady mobile-friendly cadence.
-   row=1; frame=Math.floor(phase*8.5)%4;
+   // Four-frame run cycle: about 1.75 complete strides per second.
+   row=1; frame=Math.floor(gait)%4;
   } else {
    // Slow idle loop so the armor and cape do not look frozen.
    row=0; frame=Math.floor(phase*3.2)%4;
@@ -160,16 +166,19 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
   const facingScaleX=facingAway?.86:(facingToward?1.035:.93);
   const facingScaleY=facingAway?.97:(facingToward?1.015:1);
   const facingTilt=clamp(Math.sin(facingAngle)*.055,-.055,.055);
+  const strideOffsets = [-3.0, 1.8, 3.0, -1.8];
+  const strideX = moving ? strideOffsets[frame] : 0;
+  const strideTilt = moving ? [-.035,.025,.035,-.025][frame] : 0;
   ctx.save();
-  ctx.translate(attackNudge,-bob+dead*17);
-  ctx.rotate(dead*.24+facingTilt);
-  ctx.scale((facingLeft?-1:1)*facingScaleX,facingScaleY);
+  ctx.translate(attackNudge+runSway+strideX,-bob+dead*17);
+  ctx.rotate(dead*.24+facingTilt+runLean+strideTilt);
+  ctx.scale((facingLeft?-1:1)*facingScaleX*(moving?1.012:1),facingScaleY*runStretch);
   ctx.globalAlpha*=1-dead*.52;
   if(hit>0){ctx.globalAlpha=.78;ctx.filter="brightness(1.3) saturate(1.15)";}
   // Draw the cape-side slice with a small independent flutter; the torso and
   // weapon remain steady, creating a separate cape-motion layer on mobile.
   const capeWidth=w*.43;
-  const capeShift=Math.sin(phase*5.4+(moving?1.1:0))*((moving?3.2:1.9)*scale);
+  const capeShift=Math.sin(phase*(moving?1.75:1.05)+(moving?1.1:0))*((moving?8.2:2.0)*scale);
   ctx.save();
   ctx.beginPath();ctx.rect(-w/2-5,-h+4,capeWidth+7,h+8);ctx.clip();
   ctx.drawImage(halpasSheet,sx,sy,cellW,cellH,-w/2+capeShift,-h+8,w,h);
@@ -182,6 +191,15 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
  } else {
   // Loading fallback while the sprite sheet is fetched.
   ctx.save();ctx.globalAlpha=.65;ellipse(0,-76,24,52,"#241b35","#dca34d",2);ctx.restore();
+ }
+ // Light foot puffs reinforce weight and forward motion without moving the ground ring.
+ if(moving && skill<=0 && attack<=0){
+  const dustPulse=(Math.sin(phase*1.22)+1)*.5;
+  ctx.save();ctx.globalAlpha=.12+.10*dustPulse;
+  ctx.fillStyle="#a99aff";ctx.shadowColor="#8d7bff";ctx.shadowBlur=8;
+  ellipse(-11-runSway*.35,5,4+2*dustPulse,1.8,"rgba(164,145,255,.24)");
+  ellipse(10+runSway*.35,6,3+2*(1-dustPulse),1.5,"rgba(164,145,255,.20)");
+  ctx.restore();
  }
  // Small sparks orbit the character without hiding the animated silhouette.
  ctx.save();ctx.globalCompositeOperation="lighter";

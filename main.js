@@ -109,24 +109,7 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  ellipse(0,7,29,10,"#344cff");ctx.restore();
  drawAura(0,8,29,"#536cff",.95);
 
- // Broad dragon wings behind the armor. Membranes are shaded separately
- // so the silhouette reads clearly at the small mobile-game scale.
- ctx.save();ctx.translate(0,-34+bob);ctx.globalAlpha=.98;
- // Left wing outer frame and membrane.
- path([[-8,1],[-21,-9],[-34,-28],[-39,-48],[-28,-42],[-18,-48],[-10,-34],[-4,-40],[-2,-17]],
-      "#251b45","#8b72d9",1.5);
- path([[-8,-2],[-21,-12],[-31,-31],[-35,-43],[-26,-36],[-18,-42],[-11,-29],[-5,-35]],
-      "#542b72","#b18cff",.8);
- ctx.strokeStyle="#d0a7ff";ctx.lineWidth=1.1;ctx.globalAlpha=.8;
- ctx.beginPath();ctx.moveTo(-8,-2);ctx.lineTo(-31,-31);ctx.moveTo(-10,-8);ctx.lineTo(-18,-42);ctx.moveTo(-13,-12);ctx.lineTo(-35,-43);ctx.stroke();
- // Right wing.
- path([[8,1],[21,-9],[34,-28],[39,-48],[28,-42],[18,-48],[10,-34],[4,-40],[2,-17]],
-      "#251b45","#8b72d9",1.5);
- path([[8,-2],[21,-12],[31,-31],[35,-43],[26,-36],[18,-42],[11,-29],[5,-35]],
-      "#542b72","#b18cff",.8);
- ctx.beginPath();ctx.moveTo(8,-2);ctx.lineTo(31,-31);ctx.moveTo(10,-8);ctx.lineTo(18,-42);ctx.moveTo(13,-12);ctx.lineTo(35,-43);ctx.stroke();
- ctx.restore();
-
+ // No dragon wings: keep the original-inspired cape silhouette clear.
  // Long crimson mantle, layered with dark inner fold and gold hem.
  path([[-10,-34],[10,-34],[15,-17+sway],[20,8+sway], [7,13+sway],[-7,12-sway],[-20,7-sway],[-15,-17]],
       "#360d20","#b33c55",1.5);
@@ -134,6 +117,10 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
       "#9b1938","#e05a70",1);
  path([[-13,-15],[-9,-10+sway],[0,-7+sway],[9,-10+sway],[14,-15]],
       null,"#e3b65d",1.2);
+ // Layered fabric folds and a soft red highlight make the cape read as cloth.
+ path([[-10,-27],[-6,-16+sway],[-8,5+sway]],null,"#d34d68",1.1);
+ path([[1,-28],[3,-14+sway],[5,8+sway]],null,"#e45b70",1.0);
+ path([[8,-25],[10,-13+sway],[12,4+sway]],null,"#6c142d",1.2);
  // Cloak center seam and clasp.
  ctx.strokeStyle="#e4b75f";ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(0,7+sway);ctx.stroke();
  ellipse(0,-33,4.2,3.3,"#f4d27b","#79501f",1);
@@ -154,6 +141,10 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  path([[-7,-32],[0,-37],[7,-32],[6,-18],[0,-13],[-6,-18]],
       "#171629","#8565d8",1.1);
  path([[-4,-31],[0,-34],[4,-31],[3,-21],[-3,-21]],"#4a3268","#c7a0ff",.8);
+ // Fine gold filigree lines on the breastplate.
+ ctx.strokeStyle="#d8b05d";ctx.lineWidth=.8;
+ ctx.beginPath();ctx.moveTo(-8,-24);ctx.lineTo(-5,-20);ctx.lineTo(-2,-19);
+ ctx.moveTo(8,-24);ctx.lineTo(5,-20);ctx.lineTo(2,-19);ctx.stroke();
  // Breastplate highlights and center ruby.
  ctx.strokeStyle="#f0c96b";ctx.lineWidth=1;
  ctx.beginPath();ctx.moveTo(-8,-35);ctx.lineTo(-4,-28);ctx.lineTo(0,-26);ctx.lineTo(4,-28);ctx.lineTo(8,-35);ctx.stroke();

@@ -107,7 +107,7 @@ function drawAura(x,y,r,color,alpha=1){
 // The supplied source is low-resolution, so keep it crisp enough for mobile and avoid
 // drawing a second geometric body over it. The aura remains separate gameplay VFX.
 const halpasSprite = new Image();
-halpasSprite.src = "./halpas_original_cutout.png?v=final-4";
+halpasSprite.src = "./halpas_original_cutout.png?v=final-4-1";
 let halpasSpriteReady = false;
 halpasSprite.onload = () => { halpasSpriteReady = true; };
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0){
@@ -125,11 +125,11 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0){
  // Soft released-energy glow behind the card artwork, not a pair of wings.
  ctx.save();
  ctx.globalCompositeOperation="lighter";
- const glow=ctx.createRadialGradient(0,-105,8,0,-95,100);
- glow.addColorStop(0,"rgba(255,151,54,.20)");
- glow.addColorStop(.42,"rgba(155,65,255,.19)");
+ const glow=ctx.createRadialGradient(0,-82,5,0,-82,68);
+ glow.addColorStop(0,"rgba(255,151,54,.12)");
+ glow.addColorStop(.42,"rgba(155,65,255,.10)");
  glow.addColorStop(1,"rgba(70,40,190,0)");
- ellipse(0,-102,72,104,glow);
+ ellipse(0,-82,48,70,glow);
  ctx.restore();
  if(halpasSpriteReady){
   const h=218*scale*breath;
@@ -267,7 +267,7 @@ function draw(){
  const actors=enemies.map(e=>({y:e.x+e.y,draw:()=>drawEnemy(e)}));
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
-  drawHalpas(p.x,p.y,1.38,player.walk+time,player.faceX,player.faceY,player.attack>0?1:0,player.hit);
+  drawHalpas(p.x,p.y,0.82,player.walk+time,player.faceX,player.faceY,player.attack>0?1:0,player.hit);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 

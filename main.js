@@ -101,7 +101,7 @@ function drawAura(x,y,r,color,alpha=1){
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
  const bob=Math.sin(phase*7)*1.35;
- const sway=Math.sin(phase*3.1)*3.2;
+ const sway=Math.sin(phase*3.1)*4.4 + Math.sin(phase*1.7)*1.4;
 
  // Ground aura and soft cast shadow.
  ctx.save();ctx.globalAlpha=.25;ctx.shadowColor="#4268ff";ctx.shadowBlur=24;
@@ -120,6 +120,12 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  path([[-10,-27],[-6,-16+sway],[-8,5+sway]],null,"#d34d68",1.1);
  path([[1,-28],[3,-14+sway],[5,8+sway]],null,"#e45b70",1.0);
  path([[8,-25],[10,-13+sway],[12,4+sway]],null,"#6c142d",1.2);
+ // Soft central fabric sheen and darker side folds add cloth depth.
+ ctx.save();ctx.globalAlpha=.34;
+ const cloth=ctx.createLinearGradient(-15,-20,15,5+sway);
+ cloth.addColorStop(0,"#4b1028");cloth.addColorStop(.48,"#f06a7b");cloth.addColorStop(1,"#4a0c25");
+ path([[-8,-29],[0,-31],[8,-29],[12,5+sway],[4,9+sway],[-5,8-sway],[-13,4-sway]],cloth);
+ ctx.restore();
  // Cloak center seam and clasp.
  ctx.strokeStyle="#e4b75f";ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(0,7+sway);ctx.stroke();
  ellipse(0,-33,4.2,3.3,"#f4d27b","#79501f",1);
@@ -184,8 +190,21 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  path([[-3,-1],[-7,-20],[0,-34],[7,-20],[3,-1]],"#31145f","#8b6cff",1.5);
  path([[-1,-4],[-4,-20],[0,-29],[4,-20],[1,-4]],"#987cff","#d8c8ff",.8);
  path([[0,-28],[0,-5]],null,"#e5d7ff",.8);
+ // Crystal edge glow.
+ ctx.save();ctx.globalAlpha=.62;ctx.shadowColor="#a76aff";ctx.shadowBlur=12;
+ ctx.strokeStyle="#c8a7ff";ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.moveTo(-5,-19);ctx.lineTo(0,-31);ctx.lineTo(5,-19);ctx.stroke();
+ ctx.restore();
  ellipse(0,15,2.2,2.2,"#d9b65c","#fff0b0",.5);
  ctx.restore();
+
+ // A brief violet sweep appears only during the attack animation.
+ if(attack>.05){
+  ctx.save();ctx.globalAlpha=.35+attack*.28;ctx.strokeStyle="#c18aff";
+  ctx.shadowColor="#a34dff";ctx.shadowBlur=17;ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(7,-26,31,-1.12,.42);ctx.stroke();
+  ctx.restore();
+ }
 
  // Animated glints on metal and a cool blue edge aura.
  ctx.save();ctx.globalCompositeOperation="lighter";ctx.globalAlpha=.22+.06*Math.sin(phase*5);
@@ -198,6 +217,10 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
   ctx.globalAlpha=.45+.35*Math.sin(phase*4+i);
   ellipse(sx,sy,1.1,1.1,"#9ab8ff");
  }
+ // Brief warm glints travel across the gold trim during idle animation.
+ ctx.globalAlpha=.18+.12*Math.sin(phase*2.2);
+ ctx.strokeStyle="#ffe3a0";ctx.lineWidth=.9;
+ ctx.beginPath();ctx.moveTo(-17,-33);ctx.lineTo(-12,-29);ctx.moveTo(17,-33);ctx.lineTo(12,-29);ctx.stroke();
  ctx.restore();
 }
 function drawEnemy(e){

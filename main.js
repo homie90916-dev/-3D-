@@ -65,10 +65,10 @@ function roundedRect(x,y,w,h,r,fill,stroke=null,lw=1){
 }
 function drawFloor(){
  ctx.fillStyle="#292720";ctx.fillRect(0,0,W,H);
- const tile=35;
+ const tile=54;
  // Stone paving follows the same isometric grid as the reference footage.
- for(let gy=-34;gy<35;gy++){
-  for(let gx=-34;gx<35;gx++){
+ for(let gy=-25;gy<26;gy++){
+  for(let gx=-25;gx<26;gx++){
    const p=iso(gx*1.08,gy*1.08);
    const sx=W/2+(p.x-(iso(player.x,player.y).x))*42;
    const sy=H*.49+(p.y-(iso(player.x,player.y).y))*42;
@@ -77,7 +77,7 @@ function drawFloor(){
    const f=n-Math.floor(n);
    const base=30+Math.floor(f*17);
    const c=`rgb(${base+8},${base+7},${base+2})`;
-   const w=tile*(.84+f*.15),h=tile*.48;
+   const w=tile*(.88+f*.10),h=tile*.46;
    path([[sx,sy-h],[sx+w,sy],[sx,sy+h],[sx-w,sy]],c,"#171812",1);
    // Broken-stone highlight on upper edge.
    ctx.strokeStyle="rgba(190,174,133,.10)";ctx.lineWidth=1;
@@ -100,58 +100,114 @@ function drawAura(x,y,r,color,alpha=1){
 }
 function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
- const bob=Math.sin(phase*7)*1.4;
- // Blue-violet silhouette aura and circular ground mark.
- drawAura(0,8,26,"#536cff",.95);
- ctx.save();ctx.globalAlpha=.22+.08*Math.sin(phase*4);
- ctx.shadowColor="#315dff";ctx.shadowBlur=20;ellipse(0,-5,22,31,"#303fff");ctx.restore();
+ const bob=Math.sin(phase*7)*1.35;
+ const sway=Math.sin(phase*3.1)*3.2;
+ const wingBeat=Math.sin(phase*2.8)*2.5;
 
- // Back cloak: crimson tapered cloth, animated hem.
- const sway=Math.sin(phase*3.4)*3;
- path([[-10,-34],[10,-34],[17,-15+sway],[14,8+sway],[-2,12+sway],[-17,5-sway],[-16,-15]],
-      "#501124","#a52d49",1.5);
- path([[-9,-31],[8,-31],[12,-14+sway],[9,2+sway],[-2,5+sway],[-12,1-sway],[-12,-15]],
-      "#a51f3c","#d34a5d",.8);
- // Gold cape clasp.
- ellipse(0,-32,4,3,"#e7bb58","#6d461d",1);
+ // Ground aura and soft cast shadow.
+ ctx.save();ctx.globalAlpha=.25;ctx.shadowColor="#4268ff";ctx.shadowBlur=24;
+ ellipse(0,7,29,10,"#344cff");ctx.restore();
+ drawAura(0,8,29,"#536cff",.95);
 
- // Legs and boots, seen from slightly elevated isometric angle.
- path([[-10,-3],[-2,-2],[-4,13],[-10,16],[-15,12]],"#111522","#526078",1);
- path([[2,-2],[10,-4],[14,11],[8,16],[2,12]],"#151824","#526078",1);
- path([[-14,10],[-5,10],[-4,16],[-15,18]],"#090d17","#92723c",1);
- path([[5,10],[14,9],[17,16],[5,18]],"#090d17","#92723c",1);
- // Body: dark robe/plate silhouette with indigo outline like the video.
- path([[-15,-31],[-10,-38],[9,-38],[15,-30],[14,-8],[9,1],[-10,1],[-15,-8]],
-      "#111522","#3c56d8",2.2);
- // Black chest plate with purple highlight.
- path([[-10,-30],[0,-35],[10,-29],[9,-10],[0,-5],[-10,-11]],"#171629","#6d50d9",1);
- path([[-7,-28],[0,-32],[7,-28],[5,-17],[-5,-17]],"#302044","#7b5ce9",.8);
- // Gold shoulder/arm guards.
- ellipse(-13,-29,6,5,"#252333","#c18b38",1.5);
- ellipse(13,-29,6,5,"#252333","#c18b38",1.5);
- path([[-18,-31],[-14,-39],[-10,-34],[-12,-27]],"#b78231","#f2d17c",1);
- path([[18,-31],[14,-39],[10,-34],[12,-27]],"#b78231","#f2d17c",1);
- // Head and horned golden crown/helmet.
- ellipse(0,-43+bob,9,10,"#171725","#536dff",1.6);
- path([[-9,-46],[ -7,-54],[-3,-49],[0,-57],[4,-49],[8,-54],[10,-45],[7,-38],[-7,-38]],
-      "#a77b35","#f3d078",1.3);
- path([[-6,-45],[-4,-50],[0,-47],[4,-50],[7,-44],[5,-40],[-5,-40]],"#22233c","#d4a34b",1);
- // Blue face slit and tiny gold brow.
- roundedRect(-4,-44+bob,8,2,1,"#4c8dff");
- // Short horns flare from helmet.
- path([[-7,-48],[-13,-58],[-5,-53]],"#c29343","#f2cf72",1);
- path([[7,-48],[13,-58],[5,-53]],"#c29343","#f2cf72",1);
- // Sword / violet weapon held to character's right, angled upward.
- ctx.save();ctx.translate(15,-25);ctx.rotate(-.34+attack*.25);
- path([[-2,2],[2,2],[2,13],[-2,13]],"#5c351d","#d7a14a",1);
- path([[-6,1],[6,1],[5,4],[-5,4]],"#d4a24a","#fff0a0",.8);
- path([[-3,-1],[-5,-17],[0,-26],[5,-17],[3,-1]],"#381d78","#6f7cff",1.5);
- path([[-1,-3],[-2,-17],[0,-22],[2,-17],[1,-3]],"#9b7dff");
+ // Broad dragon wings behind the armor. Membranes are shaded separately
+ // so the silhouette reads clearly at the small mobile-game scale.
+ ctx.save();ctx.translate(0,-34+bob);ctx.globalAlpha=.98;
+ // Left wing outer frame and membrane.
+ path([[-8,1],[-21,-9],[-34,-28],[-39,-48],[-28,-42],[-18,-48],[-10,-34],[-4,-40],[-2,-17]],
+      "#251b45","#8b72d9",1.5);
+ path([[-8,-2],[-21,-12],[-31,-31],[-35,-43],[-26,-36],[-18,-42],[-11,-29],[-5,-35]],
+      "#542b72","#b18cff",.8);
+ ctx.strokeStyle="#d0a7ff";ctx.lineWidth=1.1;ctx.globalAlpha=.8;
+ ctx.beginPath();ctx.moveTo(-8,-2);ctx.lineTo(-31,-31);ctx.moveTo(-10,-8);ctx.lineTo(-18,-42);ctx.moveTo(-13,-12);ctx.lineTo(-35,-43);ctx.stroke();
+ // Right wing.
+ path([[8,1],[21,-9],[34,-28],[39,-48],[28,-42],[18,-48],[10,-34],[4,-40],[2,-17]],
+      "#251b45","#8b72d9",1.5);
+ path([[8,-2],[21,-12],[31,-31],[35,-43],[26,-36],[18,-42],[11,-29],[5,-35]],
+      "#542b72","#b18cff",.8);
+ ctx.beginPath();ctx.moveTo(8,-2);ctx.lineTo(31,-31);ctx.moveTo(10,-8);ctx.lineTo(18,-42);ctx.moveTo(13,-12);ctx.lineTo(35,-43);ctx.stroke();
  ctx.restore();
- // Thin electric-blue contour glow around the sprite.
- ctx.globalCompositeOperation="lighter";ctx.globalAlpha=.22;
- ctx.strokeStyle="#648aff";ctx.lineWidth=5;ctx.shadowColor="#4a66ff";ctx.shadowBlur=12;
- ctx.beginPath();ctx.ellipse(0,-27,17,29,0,0,Math.PI*2);ctx.stroke();
+
+ // Long crimson mantle, layered with dark inner fold and gold hem.
+ path([[-10,-34],[10,-34],[15,-17+sway],[20,8+sway], [7,13+sway],[-7,12-sway],[-20,7-sway],[-15,-17]],
+      "#360d20","#b33c55",1.5);
+ path([[-7,-32],[7,-32],[11,-16+sway],[13,5+sway],[4,9+sway],[-5,8-sway],[-13,4-sway],[-10,-16]],
+      "#9b1938","#e05a70",1);
+ path([[-13,-15],[-9,-10+sway],[0,-7+sway],[9,-10+sway],[14,-15]],
+      null,"#e3b65d",1.2);
+ // Cloak center seam and clasp.
+ ctx.strokeStyle="#e4b75f";ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(0,7+sway);ctx.stroke();
+ ellipse(0,-33,4.2,3.3,"#f4d27b","#79501f",1);
+
+ // Armored legs and heavy boots with gold toe plates.
+ path([[-11,-8],[-2,-8],[-3,10],[-9,15],[-15,11]],"#151927","#7861b0",1.2);
+ path([[2,-8],[11,-8],[15,11],[8,15],[3,10]],"#151927","#7861b0",1.2);
+ path([[-15,9],[-5,9],[-4,17],[-17,18]],"#090d17","#d2a34f",1.4);
+ path([[5,9],[15,9],[18,17],[5,18]],"#090d17","#d2a34f",1.4);
+ path([[-13,11],[-6,11],[-6,14],[-14,14]],"#b88a3e");
+ path([[7,11],[14,11],[15,14],[7,14]],"#b88a3e");
+
+ // Torso silhouette and layered breastplate.
+ path([[-15,-33],[-11,-40],[0,-43],[11,-40],[15,-33],[13,-10],[8,-3],[-8,-3],[-13,-10]],
+      "#101522","#8d70ed",1.8);
+ path([[-11,-32],[-7,-38],[0,-40],[7,-38],[11,-32],[9,-12],[0,-7],[-9,-12]],
+      "#242039","#d4a44e",1.1);
+ path([[-7,-32],[0,-37],[7,-32],[6,-18],[0,-13],[-6,-18]],
+      "#171629","#8565d8",1.1);
+ path([[-4,-31],[0,-34],[4,-31],[3,-21],[-3,-21]],"#4a3268","#c7a0ff",.8);
+ // Breastplate highlights and center ruby.
+ ctx.strokeStyle="#f0c96b";ctx.lineWidth=1;
+ ctx.beginPath();ctx.moveTo(-8,-35);ctx.lineTo(-4,-28);ctx.lineTo(0,-26);ctx.lineTo(4,-28);ctx.lineTo(8,-35);ctx.stroke();
+ path([[-2,-25],[0,-28],[2,-25],[0,-21]],"#d84d6d","#ffd0df",.6);
+
+ // Shoulder pauldrons: layered gold rims over dark steel.
+ ellipse(-14,-31,7,6,"#282337","#e2b65d",1.6);
+ ellipse(14,-31,7,6,"#282337","#e2b65d",1.6);
+ path([[-20,-32],[-18,-42],[-12,-39],[-9,-32],[-14,-27]],"#a77732","#f6d987",1.1);
+ path([[20,-32],[18,-42],[12,-39],[9,-32],[14,-27]],"#a77732","#f6d987",1.1);
+ path([[-18,-34],[-16,-39],[-13,-36]],"#f8dc91");
+ path([[18,-34],[16,-39],[13,-36]],"#f8dc91");
+
+ // Forearms and gauntlets.
+ path([[-18,-27],[-14,-25],[-15,-12],[-20,-11],[-22,-18]],"#171b2b","#bd8c43",1.2);
+ path([[18,-27],[14,-25],[15,-12],[20,-11],[22,-18]],"#171b2b","#bd8c43",1.2);
+ path([[-21,-17],[-15,-17],[-14,-12],[-21,-11]],"#c18b3b","#f4d37a",.8);
+ path([[21,-17],[15,-17],[14,-12],[21,-11]],"#c18b3b","#f4d37a",.8);
+
+ // Horned dragon helm with a strong faceplate silhouette.
+ ellipse(0,-46+bob,10.2,10.8,"#171b2b","#d3a34e",1.4);
+ path([[-10,-48],[-8,-57],[-4,-52],[0,-61],[4,-52],[8,-57],[10,-48],[7,-39],[-7,-39]],
+      "#9d7133","#f5d47d",1.5);
+ path([[-7,-47],[-5,-52],[0,-49],[5,-52],[7,-47],[5,-41],[-5,-41]],
+      "#25233d","#e3b75f",1);
+ path([[-5,-45],[0,-48],[5,-45],[3,-40],[-3,-40]],"#111a31","#627cff",.8);
+ roundedRect(-4,-45+bob,8,2.2,1,"#5d9aff");
+ // Crown horns, gold inner edge.
+ path([[-7,-51],[-15,-63],[-12,-51],[-5,-48]],"#b78337","#ffe39a",1.2);
+ path([[7,-51],[15,-63],[12,-51],[5,-48]],"#b78337","#ffe39a",1.2);
+ path([[-13,-58],[-12,-52],[-9,-51]],null,"#fff0bd",.8);
+ path([[13,-58],[12,-52],[9,-51]],null,"#fff0bd",.8);
+
+ // Oversized violet greatsword, with gem core, crossguard and pommel.
+ ctx.save();ctx.translate(18,-27);ctx.rotate(-.38+attack*.38);
+ path([[-2,1],[2,1],[2,16],[-2,16]],"#4d2b20","#e3b65b",1);
+ path([[-6,1],[6,1],[5,4],[-5,4]],"#d7a64e","#fff0a0",.8);
+ path([[-3,-1],[-7,-20],[0,-34],[7,-20],[3,-1]],"#31145f","#8b6cff",1.5);
+ path([[-1,-4],[-4,-20],[0,-29],[4,-20],[1,-4]],"#987cff","#d8c8ff",.8);
+ path([[0,-28],[0,-5]],null,"#e5d7ff",.8);
+ ellipse(0,15,2.2,2.2,"#d9b65c","#fff0b0",.5);
+ ctx.restore();
+
+ // Animated glints on metal and a cool blue edge aura.
+ ctx.save();ctx.globalCompositeOperation="lighter";ctx.globalAlpha=.22+.06*Math.sin(phase*5);
+ ctx.strokeStyle="#638cff";ctx.lineWidth=4;ctx.shadowColor="#4a66ff";ctx.shadowBlur=15;
+ ctx.beginPath();ctx.ellipse(0,-28,20,34,0,0,Math.PI*2);ctx.stroke();
+ ctx.restore();
+ // Tiny moving sparkles around the armor.
+ for(let i=0;i<3;i++){
+  const a=phase*1.8+i*2.1, sx=Math.cos(a)*24, sy=-28+Math.sin(a)*28;
+  ctx.globalAlpha=.45+.35*Math.sin(phase*4+i);
+  ellipse(sx,sy,1.1,1.1,"#9ab8ff");
+ }
  ctx.restore();
 }
 function drawEnemy(e){
@@ -251,7 +307,7 @@ function draw(){
  const actors=enemies.map(e=>({y:e.x+e.y,draw:()=>drawEnemy(e)}));
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
-  drawHalpas(p.x,p.y,1.25,player.walk+time,player.faceX,player.faceY,player.attack>0?1:0);
+  drawHalpas(p.x,p.y,1.38,player.walk+time,player.faceX,player.faceY,player.attack>0?1:0);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 

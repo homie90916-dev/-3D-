@@ -75,7 +75,7 @@ function roundedRect(x,y,w,h,r,fill,stroke=null,lw=1){
  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();}
 }
 const arenaTexture = new Image();
-arenaTexture.src = "./arena_ancient_ruins.png?v=9-0";
+arenaTexture.src = "./arena_ancient_ruins.png?v=11-0";
 let arenaTextureReady = false;
 arenaTexture.onload = () => { arenaTextureReady = true; };
 function drawFloor(){
@@ -86,7 +86,7 @@ function drawFloor(){
     const iw=arenaTexture.naturalWidth, ih=arenaTexture.naturalHeight;
     const scale=Math.max(W/iw,H/ih)*1.22;
     const dw=iw*scale,dh=ih*scale;
-    const driftX=clamp(-player.x*13,-190,190),driftY=clamp(-player.y*8,-120,120);
+    const driftX=clamp(-player.x*19,-260,260),driftY=clamp(-player.y*13,-170,170);
     const ox=(W-dw)/2+driftX, oy=(H-dh)/2+driftY;
     ctx.drawImage(arenaTexture,ox,oy,dw,dh);
   } else {
@@ -144,11 +144,11 @@ function drawAura(x,y,r,color,alpha=1){
 // - New 4x8 sheet supplies eight genuinely different running views.
 // - Canvas transforms add body-weight, lean and foot timing while the ground aura stays planted.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites_v10.png?v=final-10-0";
+halpasSheet.src = "./halpas_animated_sprites_v10.png?v=final-11-0";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 const halpasRunSheet = new Image();
-halpasRunSheet.src = "./halpas_directional_run.png?v=final-9-0";
+halpasRunSheet.src = "./halpas_directional_run.png?v=final-11-0";
 let halpasRunReady = false;
 halpasRunSheet.onload = () => { halpasRunReady = true; };
 
@@ -332,6 +332,8 @@ function drawEnemy(e){
  const p=screenPos(e.x,e.y),bob=Math.sin(time*4.4+e.phase)*1.9;
  const gait=Math.sin(time*7.2+e.phase)*2.2;
  ctx.save();ctx.translate(p.x,p.y);
+ const attackLunge=e.attack>0?Math.sin((1-e.attack/1.05)*Math.PI)*5:0;
+ ctx.translate(0,-attackLunge);
  if(e.kind==="brute")ctx.scale(1.48,1.48);
  else if(e.kind==="mage")ctx.scale(1.16,1.16);
  else ctx.scale(1.08,1.08);
@@ -413,20 +415,22 @@ function drawEnemy(e){
  // Ground contact rune and health indicator.
  ctx.save();ctx.globalAlpha=.28;ctx.strokeStyle=e.kind==="knight"?"#dca45c":e.kind==="mage"?"#a56bdf":e.kind==="brute"?"#e34e58":"#c94c66";ctx.lineWidth=1;
  ctx.beginPath();ctx.ellipse(0,7,16,5,0,0,Math.PI*2);ctx.stroke();ctx.restore();
- if(e.hp<e.maxHp){
-  roundedRect(-16,-61+bob,32,5,2,"#1c1019");
-  roundedRect(-15.5,-60.5+bob,31*clamp(e.hp/e.maxHp,0,1),4,1.5,e.kind==="knight"?"#e0a34f":e.kind==="mage"?"#b77aff":e.kind==="brute"?"#ef5361":"#ed526f");
+ {
+  ctx.save();ctx.globalAlpha=e.hp<e.maxHp?.95:.62;
+  roundedRect(-17,-63+bob,34,6,2,"#100b12","#9b7c63",.6);
+  roundedRect(-16,-62.3+bob,32*clamp(e.hp/e.maxHp,0,1),4.6,1.5,e.kind==="knight"?"#e0a34f":e.kind==="mage"?"#b77aff":e.kind==="brute"?"#ef5361":"#ed526f");
+  ctx.restore();
  }
  ctx.restore();
 }
 function spawnEnemy(){
- const a=rand(0,Math.PI*2),r=rand(8,13),roll=Math.random();
+ const a=rand(0,Math.PI*2),r=rand(3.15,5.25),roll=Math.random();
  const kind=wave>3&&roll>.91?"brute":wave>1&&roll>.80?"mage":wave>2&&roll>.68?"knight":roll>.36?"skeleton":"ghoul";
  const base=kind==="brute"?165:kind==="knight"?88:kind==="mage"?64:kind==="skeleton"?54:44;
  const speed=kind==="brute"?.48:kind==="knight"?.62:kind==="mage"?.70:kind==="skeleton"?.88:rand(.78,1.08);
  enemies.push({x:player.x+Math.cos(a)*r,y:player.y+Math.sin(a)*r,hp:base+wave*7,maxHp:base+wave*7,speed,attack:rand(.2,1),phase:rand(0,8),kind});
 }
-for(let i=0;i<7;i++)spawnEnemy();
+for(let i=0;i<11;i++)spawnEnemy();
 
 function addBurst(x,y,color="#a78bff",count=16,power=1){
  for(let i=0;i<count;i++){
@@ -536,7 +540,7 @@ function draw(){
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
   const dead=player.deadAt>0?clamp((time-player.deadAt)/1.05,0,1):0;
-  drawHalpas(p.x,p.y,.76,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim,dead);
+  drawHalpas(p.x,p.y,.82,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim,dead);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 
@@ -644,7 +648,7 @@ function tick(now){
    else if(e.attack<=0){e.attack=1.05;if(invuln<=0){hp-=7;invuln=.48;player.hit=.26;player.walk+=.8;screenShake=Math.max(screenShake,.10);addBurst(player.x,player.y,"#ff4e68",10,.7);if(hp<=0){hp=0;endGame();}}}
    e.attack=Math.max(0,e.attack-dt);
   }
-  spawnTimer+=dt;if(enemies.length<Math.min(18,9+wave)&&spawnTimer>Math.max(.48,1.1-wave*.025)){spawnEnemy();spawnTimer=0;}
+  spawnTimer+=dt;if(enemies.length<Math.min(22,12+wave*2)&&spawnTimer>Math.max(.42,.88-wave*.025)){spawnEnemy();spawnTimer=0;}
   for(const p of particles){p.x+=p.vx*dt/55;p.y+=p.vy*dt/55;p.vy+=80*dt/55;p.life-=dt;}
   for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);
   for(const a of runes)a.life-=dt;for(let i=runes.length-1;i>=0;i--)if(runes[i].life<=0)runes.splice(i,1);

@@ -108,7 +108,7 @@ function drawFloor(){
  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
 }
 function drawRuins(){
- const items=[{x:W*.08,y:H*.38,t:"banner"},{x:W*.86,y:H*.42,t:"fire"},{x:W*.80,y:H*.27,t:"pillar"},{x:W*.14,y:H*.72,t:"wall"}];
+ const items=[{x:W*.08,y:H*.38,t:"banner"},{x:W*.86,y:H*.42,t:"fire"},{x:W*.80,y:H*.27,t:"pillar"},{x:W*.14,y:H*.72,t:"wall"},{x:W*.92,y:H*.72,t:"pillar"},{x:W*.04,y:H*.57,t:"fire"}];
  for(const o of items){ctx.save();ctx.translate(o.x,o.y);
   if(o.t==="banner"){
    ellipse(0,7,13,6,"#05050599");ctx.strokeStyle="#9b876a";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-58);ctx.lineTo(0,4);ctx.stroke();
@@ -143,11 +143,11 @@ function drawAura(x,y,r,color,alpha=1){
 // - New 4x8 sheet supplies eight genuinely different running views.
 // - Canvas transforms add body-weight, lean and foot timing while the ground aura stays planted.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-8-1";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-8-2";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 const halpasRunSheet = new Image();
-halpasRunSheet.src = "./halpas_directional_run.png?v=final-8-1";
+halpasRunSheet.src = "./halpas_directional_run.png?v=final-8-2";
 let halpasRunReady = false;
 halpasRunSheet.onload = () => { halpasRunReady = true; };
 
@@ -171,8 +171,9 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
  const runRow=RUN_ROW_FOR_SECTOR[sector]??0;
  // The new atlas contains full, broad strides; 6 frames/sec gives a deliberate
  // armored run cadence instead of the old rapid shuffle.
- const runFrame=moving?Math.floor(phase*.75)%4:0;
- const idleFrame=0;
+ const runFrame=moving?Math.floor(phase*1.15)%4:0;
+ // Four authored idle poses loop slowly: breathing, weapon sway and cape settling.
+ const idleFrame=Math.floor(time*1.35)%4;
  const attackProgress=attack>0?clamp(1-attack/.68,0,1):0;
  const skillProgress=skill>0?clamp(1-skill/1.12,0,1):0;
  const runBob=moving?([0,1.6,0,-1.6][runFrame]):Math.sin(time*1.7)*.85;
@@ -221,10 +222,12 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
   ctx.rotate(attackProgress<.25?-.035:attackProgress<.68?.055:-.015);
   drawFrame(halpasSheet,4,4,frame,2,h,h,0);
   ctx.restore();
- } else if(halpasRunReady){
-  // Direction-specific running frames. When stationary, frame zero is held and
-  // a very small breathing/sway transform creates a living idle silhouette.
-  drawFrame(halpasRunSheet,4,8,moving?runFrame:idleFrame,runRow,w,h,0);
+ } else if(halpasRunReady && moving){
+  // Direction-specific run cycle only while movement input is active.
+  drawFrame(halpasRunSheet,4,8,runFrame,runRow,w,h,0);
+ } else if(halpasSheetReady){
+  // Dedicated idle loop from row 0; never leave the character in a frozen run pose.
+  drawFrame(halpasSheet,4,4,idleFrame,0,h,h,0);
  } else if(halpasSheetReady){
   // Network/loading fallback: keep the prior sprite available.
   const frame=moving?Math.floor(phase*.75)%4:Math.floor(time*1.65)%4;
@@ -321,33 +324,66 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
  ctx.restore();
 }
 function drawEnemy(e){
- const p=screenPos(e.x,e.y),bob=Math.sin(time*5.2+e.phase)*2.0;
+ const p=screenPos(e.x,e.y),bob=Math.sin(time*4.4+e.phase)*1.6;
  ctx.save();ctx.translate(p.x,p.y);
- ctx.save();ctx.globalAlpha=.42;ctx.shadowColor="#e23b62";ctx.shadowBlur=10;ellipse(0,8,16,6,"rgba(0,0,0,.62)");ctx.restore();
+ // Ground shadow and species-specific aura.
+ ctx.save();ctx.globalAlpha=.48;ctx.shadowColor=e.kind==="knight"?"#d88b43":"#d33c59";ctx.shadowBlur=12;
+ ellipse(0,8,20,7,"rgba(0,0,0,.72)");ctx.restore();
+ ctx.save();ctx.scale(1.24,1.24);
  if(e.kind==="knight"){
-  path([[-12,-7],[-13,-26],[-8,-38],[8,-38],[13,-25],[12,-6],[5,3],[-6,3]],"#39343b","#b28a76",1.4);
-  path([[-11,-30],[-17,-43],[-4,-37],[0,-41],[6,-37],[17,-43],[11,-29]],"#8a7770","#d0b49a",1.2);
-  ellipse(0,-37+bob,10,10,"#514044","#d7b5a0",1);
-  roundedRect(-5,-39+bob,10,3,1,"#ff8b63");
-  path([[-14,-20],[-23,-13],[-18,-7],[-10,-13]],"#4b4144","#b78c77",1);
-  path([[14,-20],[23,-13],[18,-7],[10,-13]],"#4b4144","#b78c77",1);
+  // Rusted elite guard: layered plate, pauldrons, rivets, helmet and ember visor.
+  path([[-13,-7],[-14,-25],[-10,-38],[-6,-43],[6,-43],[11,-37],[14,-24],[13,-6],[6,3],[-7,3]],"#27252a","#c49a69",1.5);
+  path([[-11,-29],[-18,-36],[-22,-29],[-17,-17],[-10,-19]],"#51413b","#d6a56c",1.3);
+  path([[11,-29],[18,-36],[22,-29],[17,-17],[10,-19]],"#51413b","#d6a56c",1.3);
+  path([[-9,-26],[0,-32],[9,-26],[7,-9],[0,-5],[-7,-9]],"#5a4640","#d6b27c",1.1);
+  path([[-6,-24],[0,-28],[6,-24],[5,-14],[0,-11],[-5,-14]],"#29252c","#98745b",.8);
+  ellipse(0,-38+bob,10,10,"#494044","#d9b78b",1.3);
+  path([[-9,-40+bob],[-13,-52+bob],[-3,-46+bob],[0,-53+bob],[4,-46+bob],[13,-52+bob],[9,-39+bob]],"#62504a","#e0bb82",1.4);
+  roundedRect(-6,-39+bob,12,3.5,1,"#ff8b52");
+  ctx.save();ctx.shadowColor="#ff6a39";ctx.shadowBlur=8;roundedRect(-4.5,-39+bob,9,1.5,.7,"#ffe0a0");ctx.restore();
+  path([[-14,-19],[-23,-12],[-19,-5],[-10,-12]],"#373039","#c79a68",1.2);
+  path([[14,-19],[23,-12],[19,-5],[10,-12]],"#373039","#c79a68",1.2);
+  // Chest crest and plate seams.
+  path([[-4,-25],[0,-29],[4,-25],[3,-18],[0,-15],[-3,-18]],"#a36d43","#f0c27e",.9);
+  ellipse(0,-22,2.2,2.8,"#f7b75b");
+  ctx.strokeStyle="rgba(239,205,151,.72)";ctx.lineWidth=.8;
+  ctx.beginPath();ctx.moveTo(-7,-8);ctx.lineTo(0,-5);ctx.lineTo(7,-8);ctx.stroke();
  }else if(e.kind==="skeleton"){
-  path([[-9,-5],[-9,-24],[-5,-31],[5,-31],[9,-24],[9,-5],[4,2],[-4,2]],"#383a38","#c4baa5",1.2);
-  ellipse(0,-33+bob,9,9,"#aaa99a","#e5d9c3",1);ellipse(-3,-34+bob,1.8,2,"#241b1a");ellipse(3,-34+bob,1.8,2,"#241b1a");
-  path([[-7,-38],[-13,-47],[-3,-42]],"#b8b4a5","#f1e1c4",1);path([[7,-38],[13,-47],[3,-42]],"#b8b4a5","#f1e1c4",1);
-  ctx.strokeStyle="#d1c7ad";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-5,-18);ctx.lineTo(5,-18);ctx.moveTo(-4,-13);ctx.lineTo(4,-13);ctx.stroke();
+  // Bone warrior with rib cage, shoulder bones, jaw and a chipped skull.
+  path([[-9,-6],[-10,-23],[-6,-31],[6,-31],[10,-23],[9,-6],[4,2],[-4,2]],"#393936","#d4c6a9",1.2);
+  path([[-7,-25],[-15,-29],[-18,-23],[-11,-17]],"#827c6b","#e2d3b6",1);
+  path([[7,-25],[15,-29],[18,-23],[11,-17]],"#827c6b","#e2d3b6",1);
+  ellipse(0,-34+bob,9.5,10,"#aaa38f","#f0dfbf",1.2);
+  path([[-7,-38+bob],[-13,-49+bob],[-3,-43+bob],[0,-46+bob],[6,-42+bob],[12,-48+bob],[7,-36+bob]],"#9c9583","#e9d9b8",1);
+  ellipse(-3.2,-35+bob,2.1,2.8,"#211b1b");ellipse(3.2,-35+bob,2.1,2.8,"#211b1b");
+  path([[-4,-28+bob],[0,-26+bob],[4,-28+bob],[3,-23+bob],[-3,-23+bob]],"#706b5d","#e7d8bd",.8);
+  ctx.strokeStyle="#e0d3b8";ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(-5,-19);ctx.lineTo(5,-19);ctx.moveTo(-5,-15);ctx.lineTo(5,-15);ctx.moveTo(-4,-11);ctx.lineTo(4,-11);ctx.stroke();
+  ctx.strokeStyle="#8e8878";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-6,-7);ctx.lineTo(-10,1);ctx.moveTo(6,-7);ctx.lineTo(10,1);ctx.stroke();
  }else{
-  ctx.save();ctx.globalAlpha=.16;ctx.shadowColor="#ff365f";ctx.shadowBlur=13;ellipse(0,3,11,4,"#a62949");ctx.restore();
-  const bodyGrad=ctx.createLinearGradient(-10,-30,10,3);bodyGrad.addColorStop(0,"#a3455b");bodyGrad.addColorStop(.45,"#6c293e");bodyGrad.addColorStop(1,"#351522");
-  path([[-9,-9],[-10,-22],[-7,-30],[0,-33],[7,-30],[10,-21],[9,-9],[4,-3],[-5,-3]],bodyGrad,"#d36b7b",1.35);
-  path([[-5,-17],[0,-21],[5,-17],[4,-8],[-4,-8]],"#4a1c30","#9b4861",.8);
-  ellipse(-8,-24+bob*.2,3.1,4.2,"#7d3449","#d06b78",.8);ellipse(8,-24+bob*.2,3.1,4.2,"#7d3449","#d06b78",.8);
-  const headGrad=ctx.createRadialGradient(-3,-35+bob,1,0,-31+bob,12);headGrad.addColorStop(0,"#b85b68");headGrad.addColorStop(.62,"#773044");headGrad.addColorStop(1,"#3b1828");
-  ellipse(0,-31+bob,9.3,9.5,headGrad,"#d47780",1.15);
-  path([[-6,-35+bob],[-12,-45+bob],[-3,-40+bob]],"#bd4d43","#ff9361",1);path([[6,-35+bob],[12,-45+bob],[3,-40+bob]],"#bd4d43","#ff9361",1);
-  ctx.save();ctx.shadowColor="#ff365f";ctx.shadowBlur=7;roundedRect(-5,-33+bob,3.5,1.8,.8,"#ff7890");roundedRect(1.5,-33+bob,3.5,1.8,.8,"#ff7890");ctx.restore();
+  // Crimson cave fiend: layered hide, horns, glowing eyes and a plated belly.
+  ctx.save();ctx.globalAlpha=.22;ctx.shadowColor="#ff365f";ctx.shadowBlur=16;ellipse(0,3,14,5,"#a62949");ctx.restore();
+  const bodyGrad=ctx.createLinearGradient(-11,-34,11,4);bodyGrad.addColorStop(0,"#bd5a68");bodyGrad.addColorStop(.42,"#742a40");bodyGrad.addColorStop(1,"#291521");
+  path([[-10,-8],[-12,-22],[-9,-32],[-3,-36],[4,-34],[11,-26],[12,-10],[5,3],[-6,3]],bodyGrad,"#df8490",1.5);
+  path([[-8,-25],[-16,-31],[-19,-22],[-12,-17]],"#69253a","#d76b78",1.1);
+  path([[8,-25],[16,-31],[19,-22],[12,-17]],"#69253a","#d76b78",1.1);
+  path([[-6,-17],[0,-22],[6,-17],[5,-8],[0,-5],[-5,-8]],"#3b1929","#b85a70",1);
+  ctx.strokeStyle="rgba(245,158,161,.62)";ctx.lineWidth=.8;
+  ctx.beginPath();ctx.moveTo(-4,-15);ctx.lineTo(0,-12);ctx.lineTo(4,-15);ctx.stroke();
+  const headGrad=ctx.createRadialGradient(-3,-38+bob,1,0,-33+bob,13);headGrad.addColorStop(0,"#cf6d79");headGrad.addColorStop(.62,"#813349");headGrad.addColorStop(1,"#321525");
+  ellipse(0,-34+bob,10.5,10.5,headGrad,"#e58b91",1.2);
+  path([[-6,-39+bob],[-13,-52+bob],[-3,-45+bob],[0,-49+bob],[4,-44+bob],[13,-51+bob],[7,-37+bob]],"#a94348","#ff9b68",1.2);
+  ctx.save();ctx.shadowColor="#ff365f";ctx.shadowBlur=9;roundedRect(-6,-36+bob,4,2.2,1,"#ffb0a0");roundedRect(2,-36+bob,4,2.2,1,"#ffb0a0");ctx.restore();
+  ellipse(0,-27+bob,3.5,1.7,"#2c101d");
  }
- if(e.hp<e.maxHp){roundedRect(-13,-51+bob,26,4,2,"#1c1019");roundedRect(-12.5,-50.5+bob,25*clamp(e.hp/e.maxHp,0,1),3,1.5,"#f05270");}
+ ctx.restore();
+ // Ground contact rune and health indicator.
+ ctx.save();ctx.globalAlpha=.28;ctx.strokeStyle=e.kind==="knight"?"#dca45c":"#c94c66";ctx.lineWidth=1;
+ ctx.beginPath();ctx.ellipse(0,7,16,5,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+ if(e.hp<e.maxHp){
+  roundedRect(-16,-61+bob,32,5,2,"#1c1019");
+  roundedRect(-15.5,-60.5+bob,31*clamp(e.hp/e.maxHp,0,1),4,1.5,e.kind==="knight"?"#e0a34f":"#ed526f");
+ }
  ctx.restore();
 }
 function spawnEnemy(){
@@ -464,7 +500,7 @@ function draw(){
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
   const dead=player.deadAt>0?clamp((time-player.deadAt)/1.05,0,1):0;
-  drawHalpas(p.x,p.y,.78,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim,dead);
+  drawHalpas(p.x,p.y,.62,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim,dead);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 

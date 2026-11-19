@@ -1,20 +1,16 @@
-解放的哈爾巴斯｜真正 3D 修正版
+解放的哈爾巴斯｜真正 3D 啟動修正版 2
 
-這是修正後的 Three.js 即時 3D 專案。已修正上一包造成遊戲啟動後空白的 JavaScript 執行錯誤：
-- 初始化戰鬥／技能粒子陣列，避免第一幀更新時 ReferenceError。
-- ZIP 內檔案直接放在最外層，避免 GitHub Pages 找不到根目錄 index.html。
+已修正上一版仍會在啟動後立即中止的錯誤：
+- 主角光環原本存放在 hero.aura，但遊戲更新程式讀取 hero.parts.aura，造成 TypeError。
+- 已將光環正確掛到 hero.parts.aura。
+- 保留先前補上的 particles 陣列初始化。
 
-GitHub Pages 更新方式（重要）：
+更新 GitHub Pages：
 1. 解壓縮本 ZIP。
-2. 開啟 GitHub 儲存庫根目錄（與原本 index.html 同一層）。
-3. 上傳這四個檔案：index.html、main.js、style.css、README.txt。
-4. 不要把 halpas_true_3D_FIXED 這個資料夾整個上傳成子資料夾；也不要把檔案放進子資料夾。
-5. 覆蓋同名檔案並 Commit changes。
-6. 等待 GitHub Pages 部署完成。
-7. Safari 開啟：
-   https://homie90916-dev.github.io/-3D-/?v=3dfix1
+2. 在 GitHub 儲存庫根目錄（原 index.html 所在位置）上傳 index.html、main.js、style.css、README.txt。
+3. 覆蓋同名檔案，Commit changes。
+4. 等待 Pages 部署完成。
+5. 用 Safari 開啟：
+   https://homie90916-dev.github.io/-3D-/?v=3dfix2
 
-本版使用 CDN 載入 Three.js，需有網路。建議 iPhone Safari 橫向遊玩。
-若仍無法啟動，請截圖 Safari 顯示的錯誤畫面，並確認 GitHub 根目錄能直接看到 index.html、main.js、style.css。
-
-注意：這是原創程序化 3D 原型，不是天堂 M 官方模型或完整複製品。
+注意：這版需網路載入 Three.js CDN。若仍不能開啟，請把 Safari 的錯誤畫面或 GitHub Pages 部署畫面截圖傳來。

@@ -74,39 +74,40 @@ function roundedRect(x,y,w,h,r,fill,stroke=null,lw=1){
  ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();
  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();}
 }
+const arenaTexture = new Image();
+arenaTexture.src = "./arena_ancient_ruins.png?v=9-0";
+let arenaTextureReady = false;
+arenaTexture.onload = () => { arenaTextureReady = true; };
 function drawFloor(){
- ctx.fillStyle="#242321";ctx.fillRect(0,0,W,H);
- const glow=ctx.createRadialGradient(W*.16,H*.35,1,W*.16,H*.35,Math.max(100,W*.25));
- glow.addColorStop(0,"rgba(255,125,45,.13)");glow.addColorStop(1,"rgba(255,125,45,0)");
- ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
- const tile=54;
- // Stone paving follows the same isometric grid as the reference footage.
- for(let gy=-25;gy<26;gy++){
-  for(let gx=-25;gx<26;gx++){
-   const p=iso(gx*1.08,gy*1.08);
-   const sx=W/2+(p.x-(iso(player.x,player.y).x))*42;
-   const sy=H*.49+(p.y-(iso(player.x,player.y).y))*42;
-   if(sx<-tile*2||sx>W+tile*2||sy<-tile*2||sy>H+tile*2)continue;
-   const n=Math.sin(gx*12.989+gy*78.233)*43758.5453;
-   const f=n-Math.floor(n);
-   const base=30+Math.floor(f*17);
-   const c=`rgb(${base+8},${base+7},${base+2})`;
-   const w=tile*(.88+f*.10),h=tile*.46;
-   path([[sx,sy-h],[sx+w,sy],[sx,sy+h],[sx-w,sy]],c,"#171812",1);
-   // Broken-stone highlight on upper edge.
-   ctx.strokeStyle="rgba(190,174,133,.10)";ctx.lineWidth=1;
-   ctx.beginPath();ctx.moveTo(sx-w*.78,sy-h*.12);ctx.lineTo(sx,sy-h*.88);ctx.stroke();
+  // Detailed painted dungeon arena, used as a world texture rather than a flat
+  // procedural checkerboard. The camera follows the hero with a restrained pan.
+  ctx.fillStyle="#17151a";ctx.fillRect(0,0,W,H);
+  if(arenaTextureReady){
+    const iw=arenaTexture.naturalWidth, ih=arenaTexture.naturalHeight;
+    const scale=Math.max(W/iw,H/ih)*1.22;
+    const dw=iw*scale,dh=ih*scale;
+    const driftX=clamp(-player.x*13,-190,190),driftY=clamp(-player.y*8,-120,120);
+    const ox=(W-dw)/2+driftX, oy=(H-dh)/2+driftY;
+    ctx.drawImage(arenaTexture,ox,oy,dw,dh);
+  } else {
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,"#33252a");g.addColorStop(1,"#101116");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
   }
- }
- // Small broken-stone seams keep the floor from reading as a clean grid.
- ctx.save();ctx.globalAlpha=.16;ctx.strokeStyle="#b5a28b";ctx.lineWidth=.8;
- for(let i=0;i<22;i++){const x=(i*131)%W,y=(i*197)%H;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+6+(i%4)*3,y+4);ctx.lineTo(x+11,y+12);ctx.stroke();}
- ctx.restore();
- // Soft edge vignette and ambient pools of warm/cool light.
- const grd=ctx.createRadialGradient(W*.5,H*.48,30,W*.5,H*.48,Math.max(W,H)*.78);
- grd.addColorStop(0,"rgba(0,0,0,0)");grd.addColorStop(1,"rgba(0,0,0,.58)");
- ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  // Ambient haze, ember pools, and edge vignette keep the floor legible under
+  // the HUD while retaining the original game's dark, ornate battlefield mood.
+  const haze=ctx.createRadialGradient(W*.5,H*.48,8,W*.5,H*.48,Math.max(W,H)*.62);
+  haze.addColorStop(0,"rgba(8,5,12,.02)");haze.addColorStop(.72,"rgba(7,5,10,.18)");haze.addColorStop(1,"rgba(3,3,7,.72)");
+  ctx.fillStyle=haze;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  for(let i=0;i<24;i++){
+    const x=((i*173+time*(i%3+1)*3)% (W+40))-20;
+    const y=((i*97+Math.sin(time*.7+i)*22)%H);
+    const r=1.1+(i%3)*.7;ctx.globalAlpha=.10+.08*Math.sin(time*2+i);
+    ctx.fillStyle=i%4===0?"#b66bff":"#ff9a4d";ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=9;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
 }
+
 function drawRuins(){
  const items=[{x:W*.08,y:H*.38,t:"banner"},{x:W*.86,y:H*.42,t:"fire"},{x:W*.80,y:H*.27,t:"pillar"},{x:W*.14,y:H*.72,t:"wall"},{x:W*.92,y:H*.72,t:"pillar"},{x:W*.04,y:H*.57,t:"fire"}];
  for(const o of items){ctx.save();ctx.translate(o.x,o.y);
@@ -143,11 +144,11 @@ function drawAura(x,y,r,color,alpha=1){
 // - New 4x8 sheet supplies eight genuinely different running views.
 // - Canvas transforms add body-weight, lean and foot timing while the ground aura stays planted.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-8-2";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-9-0";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 const halpasRunSheet = new Image();
-halpasRunSheet.src = "./halpas_directional_run.png?v=final-8-2";
+halpasRunSheet.src = "./halpas_directional_run.png?v=final-9-0";
 let halpasRunReady = false;
 halpasRunSheet.onload = () => { halpasRunReady = true; };
 

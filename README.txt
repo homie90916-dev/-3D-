@@ -1,17 +1,20 @@
-解放的哈爾巴斯｜3D 王族陵墓戰記
+解放的哈爾巴斯｜真正 3D 修正版
 
-這是全新 Three.js 即時 3D 重建版，不再使用 2D 角色貼圖或動畫圖集作為遊戲人物。
-場景由即時 3D 幾何、材質、燈光、陰影、鏡頭、怪物 AI、角色分件模型及動畫組成。
+這是修正後的 Three.js 即時 3D 專案。已修正上一包造成遊戲啟動後空白的 JavaScript 執行錯誤：
+- 初始化戰鬥／技能粒子陣列，避免第一幀更新時 ReferenceError。
+- ZIP 內檔案直接放在最外層，避免 GitHub Pages 找不到根目錄 index.html。
 
-檔案：
-- index.html：遊戲頁面與 UI
-- main.js：Three.js 3D 場景、玩家、怪物、戰鬥與控制
-- style.css：手機 HUD 與操作介面
+GitHub Pages 更新方式（重要）：
+1. 解壓縮本 ZIP。
+2. 開啟 GitHub 儲存庫根目錄（與原本 index.html 同一層）。
+3. 上傳這四個檔案：index.html、main.js、style.css、README.txt。
+4. 不要把 halpas_true_3D_FIXED 這個資料夾整個上傳成子資料夾；也不要把檔案放進子資料夾。
+5. 覆蓋同名檔案並 Commit changes。
+6. 等待 GitHub Pages 部署完成。
+7. Safari 開啟：
+   https://homie90916-dev.github.io/-3D-/?v=3dfix1
 
-執行方式：
-1. 將三個檔案上傳至 GitHub Pages 根目錄。
-2. 本版使用 CDN 載入 Three.js，首次開啟需網路。
-3. Safari 橫向遊玩效果較佳；左側搖桿移動，右側攻擊，AUTO 自動戰鬥，技能鍵施放範圍攻擊。
-4. PC 使用 WASD/方向鍵、空白鍵攻擊、Q 施放技能。
+本版使用 CDN 載入 Three.js，需有網路。建議 iPhone Safari 橫向遊玩。
+若仍無法啟動，請截圖 Safari 顯示的錯誤畫面，並確認 GitHub 根目錄能直接看到 index.html、main.js、style.css。
 
-重要限制：本版是原創程序化 3D 原型，人物與怪物以即時 3D 幾何組裝，尚未使用高精度雕刻模型、正式骨架動畫或官方天堂 M 資產；這是從 2D 圖片遊戲跨入真正 3D 的基礎，不應視為天堂 M 完整複製品。
+注意：這是原創程序化 3D 原型，不是天堂 M 官方模型或完整複製品。

@@ -1,0 +1,21 @@
+3D ASSET LICENSES / ASSET MANIFEST
+
+1) Samurai (rigged GLB)
+Page: https://grab3d.com/models/characters/samurai/
+Download URL: https://grab3d.com/dl/samurai-rigged/samurai-rigged.glb
+License: CC0 1.0 Universal
+Model page states: High Detail, 800,000 triangles static, 4K PBR textures; separate rigged version with walk and run animations.
+
+2) Skeleton Warrior (rigged GLB)
+Page: https://grab3d.com/models/characters/skeleton-warrior/
+Download URL: https://grab3d.com/dl/skeleton-warrior-rigged/skeleton-warrior-rigged.glb
+License: CC0 1.0 Universal
+Model page states: High Detail, 800,000 triangles static, 4K PBR textures; separate rigged version with walk and run animations.
+
+3) Orc (rigged GLB)
+Page: https://grab3d.com/models/characters/orc/
+Download URL: https://grab3d.com/dl/orc-rigged/orc-rigged.glb
+License: CC0 1.0 Universal
+Model page states: High Detail, 779,346 triangles static, 4K PBR textures; separate rigged version with walk and run animations.
+
+The models are third-party CC0 assets, not official Lineage M assets. See each asset page for its license and provenance manifest.

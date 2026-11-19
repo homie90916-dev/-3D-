@@ -34,3 +34,11 @@ button{font:inherit;color:#fff;touch-action:manipulation}
 
 /* FINAL 11.0: more breathing room for the live combat field */
 @media(max-width:520px){.mapbox{width:96px;top:calc(env(safe-area-inset-top,0px) + 84px)}.battle-info{top:calc(env(safe-area-inset-top,0px) + 174px)}.buff-row{top:calc(env(safe-area-inset-top,0px) + 84px)}#message{top:calc(env(safe-area-inset-top,0px) + 128px)}.bottom-hud{padding:0 8px}.hotbar{gap:4px}.hotkey{width:46px;height:52px}}
+
+/* Complete build: refined fantasy HUD, safe touch layout, and readable combat field */
+.profile,.resource-panel,.mapbox,.battle-info,.buff-row{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.profile{border-color:#d5b477cc;box-shadow:0 3px 18px #000c,inset 0 0 14px #9b6b2a18}
+.resource-panel{border-color:#c4a06cbb}
+.mapbox{box-shadow:0 4px 18px #000d,inset 0 0 12px #b68b4518}
+.hotkey{border-color:#c7a66f;box-shadow:0 3px 12px #000d,inset 0 0 12px #9a6a311c}
+.hotkey:active,.toggle:active,.lock:active{transform:scale(.96);filter:brightness(1.25)}

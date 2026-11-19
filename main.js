@@ -143,11 +143,11 @@ function drawAura(x,y,r,color,alpha=1){
 // - New 4x8 sheet supplies eight genuinely different running views.
 // - Canvas transforms add body-weight, lean and foot timing while the ground aura stays planted.
 const halpasSheet = new Image();
-halpasSheet.src = "./halpas_animated_sprites.png?v=final-8-0";
+halpasSheet.src = "./halpas_animated_sprites.png?v=final-8-1";
 let halpasSheetReady = false;
 halpasSheet.onload = () => { halpasSheetReady = true; };
 const halpasRunSheet = new Image();
-halpasRunSheet.src = "./halpas_directional_run.png?v=final-8-0";
+halpasRunSheet.src = "./halpas_directional_run.png?v=final-8-1";
 let halpasRunReady = false;
 halpasRunSheet.onload = () => { halpasRunReady = true; };
 
@@ -209,15 +209,18 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
   // Original burst animation remains intact.
   const frame=skillProgress<.18?0:skillProgress<.40?1:skillProgress<.74?2:3;
   drawFrame(halpasSheet,4,4,frame,3,h,h,0);
- } else if(attack>0 && halpasRunReady){
-  // Keep the correct eight-direction body view; the sword arm is a separate
-  // 2D joint rig animated over this directional base pose.
-  drawFrame(halpasRunSheet,4,8,0,runRow,w,h,0);
  } else if(attack>0 && halpasSheetReady){
-  const frame=attackProgress<.20?0:attackProgress<.44?1:attackProgress<.72?2:3;
+  // IMPORTANT: use the authored sword-combo row before the run atlas.
+  // FINAL 8.0 accidentally selected the running atlas first, hiding the
+  // actual raised-sword / slash poses during every attack.
+  const frame=attackProgress<.18?0:attackProgress<.43?1:attackProgress<.72?2:3;
   const screenFacing=iso(faceX,faceY);
-  ctx.save();if(screenFacing.x<-.18)ctx.scale(-1,1);
-  drawFrame(halpasSheet,4,4,frame,2,h,h,0);ctx.restore();
+  ctx.save();
+  if(screenFacing.x<-.18)ctx.scale(-1,1);
+  // A slight forward body pitch makes the strike read as a committed swing.
+  ctx.rotate(attackProgress<.25?-.035:attackProgress<.68?.055:-.015);
+  drawFrame(halpasSheet,4,4,frame,2,h,h,0);
+  ctx.restore();
  } else if(halpasRunReady){
   // Direction-specific running frames. When stationary, frame zero is held and
   // a very small breathing/sway transform creates a living idle silhouette.
@@ -233,7 +236,7 @@ function drawHalpas(x,y,scale=1,phase=0,faceX=0,faceY=-1,attack=0,hit=0,moving=f
 
  // 2D skeletal weapon rig: shoulder -> forearm -> hand -> greatsword pivot.
  // This is animated independently from the directional body frames.
- if(attack>0){
+ if(attack>0 && !halpasSheetReady){
   const facing=iso(faceX,faceY),facingAngle=Math.atan2(facing.y,facing.x);
   const side=facing.x<-.18?-1:1;
   const swing=attackProgress<.24?-.95+(attackProgress/.24)*.22:
@@ -461,7 +464,7 @@ function draw(){
  actors.push({y:player.x+player.y,draw:()=>{
   const p=screenPos(player.x,player.y);
   const dead=player.deadAt>0?clamp((time-player.deadAt)/1.05,0,1):0;
-  drawHalpas(p.x,p.y,1,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim,dead);
+  drawHalpas(p.x,p.y,.78,player.walk+time,player.faceX,player.faceY,player.attack,player.hit,player.moving,player.skillAnim,dead);
  }});
  actors.sort((a,b)=>a.y-b.y);for(const a of actors)a.draw();
 

@@ -1,65 +1,30 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#08090d">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>解放的哈爾巴斯：王族陵墓戰記</title>
-  <link rel="stylesheet" href="./style.css?v=complete-1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#09070c">
+<title>解放的哈爾巴斯｜3D 王族陵墓戰記</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
 </head>
 <body>
-  <main id="game">
-    <canvas id="world"></canvas>
-    <div class="top-hud">
-      <section class="profile">
-        <div class="crest">♛</div>
-        <div><strong>解放的哈爾巴斯</strong><small>王族陵墓戰記 · 2.5D 動態戰場</small><b id="levelText">Lv.1</b></div>
-      </section>
-      <section class="resource-panel">
-        <div class="resource hp"><span>HP</span><i><b id="hpBar"></b></i><strong id="hpText">180/180</strong></div>
-        <div class="resource mp"><span>MP</span><i><b id="mpBar"></b></i><strong id="mpText">100/100</strong></div>
-        <div class="resource exp"><span>EXP</span><i><b id="xpBar"></b></i><strong id="xpText">0%</strong></div>
-      </section>
-      <section class="currency"><span>💎 522</span><span>🪙 18,760,430</span></section>
-      <div class="top-icons"><span>商店</span><span>技能</span><span>任務</span><span>☰</span></div>
-    </div>
-    <div class="buff-row"><span>BUFF</span><b>✦</b><b>♜</b><b>✧</b><b>❖</b><b>✹</b><b>✦</b></div>
-    <div class="mapbox"><div class="map-title">古代王族陵墓 B2</div><canvas id="minimap" width="116" height="92"></canvas></div>
-    <div class="battle-info"><div>WAVE <b id="wave">1</b></div><div>擊殺 <b id="kills">0</b></div></div>
-    <div id="message">哈爾巴斯覺醒 · 暗黑戰場</div>
-    <div class="bottom-hud">
-      <div class="left-controls">
-        <div id="joystick" aria-label="移動搖桿"><div id="stick"></div></div>
-        <span class="hint">拖曳移動</span>
-      </div>
-      <div class="hotbar">
-        <button id="attackBtn" class="hotkey sword" aria-label="普通攻擊"><span>⚔</span><small>普通攻擊</small></button>
-        <button id="skillBtn" class="hotkey purple" aria-label="哈爾巴斯爆炎"><span>✦</span><small>哈爾巴斯爆炎</small></button>
-        <button id="burstBtn" class="hotkey violet" aria-label="紫炎斬"><span>✧</span><small>紫炎斬</small></button>
-        <button id="potionBtn" class="hotkey potion" aria-label="生命藥水"><span>🧪</span><small>生命藥水</small></button>
-      </div>
-      <div class="right-controls">
-        <button id="autoBtn" class="toggle active">AUTO：開</button>
-        <button id="lockBtn" class="lock" aria-label="鎖定目標">◎</button>
-      </div>
-    </div>
-    <div class="footer-exp"><span>EXP <b id="footerXp">0.00%</b></span><i><b id="footerXpBar"></b></i></div>
-    <div id="levelUp" class="modal hidden">
-      <div class="panel"><h2>力量覺醒</h2><p>選擇一項能力提升</p>
-        <div class="choices">
-          <button data-up="power">紫炎攻擊強化　+25%</button>
-          <button data-up="health">生命上限提升　+30</button>
-          <button data-up="speed">移動速度提升　+15%</button>
-        </div>
-      </div>
-    </div>
-    <div id="gameOver" class="modal hidden">
-      <div class="panel"><h2>哈爾巴斯暫時沉眠</h2><p id="finalStats"></p><button id="restartBtn" class="action">重新覺醒</button></div>
-    </div>
-  </main>
-  <script src="./main.js?v=complete-1"></script>
-</body>
-</html>
+<div id="stage"></div>
+<div id="vignette"></div>
+<header class="top-ui">
+ <div class="portrait"><span>♛</span><b id="level">91</b></div>
+ <div class="vitals"><div class="bar hp"><i id="hpbar"></i><b id="hptext">42198 / 42198</b></div><div class="bar mp"><i id="mpbar"></i><b id="mptext">5621 / 5621</b></div><div class="statsline">⚔ 32767　♜ 328　♙ 64　✦ 85</div></div>
+ <div class="currency"><span>💎 3,200</span><span>🟡 120,375,680</span></div>
+ <nav><span>商店</span><span>背包</span><span>技能</span><span>任務</span><span>☰</span></nav>
+</header>
+<div class="buffs"><b>BUFF</b><span>✥</span><span>♜</span><span>✧</span><span>❖</span><span>✺</span><span>✥</span><span>✧</span><span>♜</span></div>
+<aside class="minimap"><div class="sun">☀ 16:28</div><div class="mapgrid"><i class="playerdot"></i><i class="mob m1"></i><i class="mob m2"></i><i class="mob m3"></i><i class="mob m4"></i></div><b>古代王族陵墓 B2</b><small>安全區域</small><div class="kill">擊殺數 <strong id="kills">0</strong></div><div class="timer" id="timer">00:00</div></aside>
+<div class="damage-layer" id="damage"></div>
+<div class="quest"><b>【主線】亡靈的復甦</b><br>消滅哈爾巴斯的手下 <span id="questkills">0</span>/500<br><em>獲得經驗與戰利品</em></div>
+<div class="joystick" id="joystick"><div id="stick"></div></div>
+<div class="right-controls"><button id="auto" class="auto active">AUTO</button><button id="attack" class="attack">⚔</button></div>
+<div class="hotbar"><button class="skill selected">✧</button><button class="skill">◈</button><button class="skill" id="skill">✹</button><button class="skill">✥</button><button class="skill">☼</button><button class="potion">🧪</button><button class="potion">🔵</button><button class="potion">📜</button></div>
+<div class="expbar"><span>EXP <b id="xptext">0.00%</b></span><i><b id="xpbar"></b></i></div>
+<div class="toast" id="toast">3D 王族陵墓戰場載入中</div>
+<div class="levelup hidden" id="levelup"><section><h2>力量覺醒</h2><p>選擇一項能力提升</p><button data-up="power">攻擊力 +25%</button><button data-up="health">最大生命 +30</button><button data-up="speed">移動速度 +15%</button></section></div>
+<div class="help">左側搖桿移動・右側攻擊・AUTO 自動戰鬥・PC：WASD / 空白鍵 / Q</div>
+<script type="module" src="main.js"></script>
+</body></html>

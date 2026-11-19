@@ -1,6 +1,22 @@
-import * as THREE from 'three';
+const THREE = window.THREE;
 
-// True real-time 3D scene: meshes, lights, shadows, camera, AI and animation.
+// True real-time 3D scene. THREE is loaded as a classic global script for iOS WebView compatibility.
+window.addEventListener('error', (event) => {
+  const toast = document.querySelector('#toast');
+  if (toast) {
+    toast.textContent = '遊戲啟動錯誤：' + (event.message || 'JavaScript error');
+    toast.classList.remove('fade');
+    toast.classList.add('error');
+  }
+});
+window.addEventListener('unhandledrejection', (event) => {
+  const toast = document.querySelector('#toast');
+  if (toast) {
+    toast.textContent = '3D 載入失敗：' + String(event.reason || 'network error');
+    toast.classList.remove('fade');
+    toast.classList.add('error');
+  }
+});
 const stage=document.querySelector('#stage');
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;stage.appendChild(renderer.domElement);

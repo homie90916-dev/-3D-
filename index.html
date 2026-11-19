@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#09070c">
 <title>解放的哈爾巴斯｜3D 王族陵墓戰記</title>
 <link rel="stylesheet" href="style.css">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+
 </head>
 <body>
 <div id="stage"></div>
@@ -26,5 +26,48 @@
 <div class="toast" id="toast">3D 王族陵墓戰場載入中</div>
 <div class="levelup hidden" id="levelup"><section><h2>力量覺醒</h2><p>選擇一項能力提升</p><button data-up="power">攻擊力 +25%</button><button data-up="health">最大生命 +30</button><button data-up="speed">移動速度 +15%</button></section></div>
 <div class="help">左側搖桿移動・右側攻擊・AUTO 自動戰鬥・PC：WASD / 空白鍵 / Q</div>
-<script type="module" src="main.js"></script>
+<script>
+(function () {
+  const sources = [
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.159.0/three.min.js',
+    'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js',
+    'https://unpkg.com/three@0.159.0/build/three.min.js'
+  ];
+  const toast = document.getElementById('toast');
+  let index = 0;
+  function showError(message) {
+    toast.textContent = message;
+    toast.classList.remove('fade');
+    toast.classList.add('error');
+  }
+  function loadNext() {
+    if (index >= sources.length) {
+      showError('3D 引擎下載失敗。請確認網路可連線，或稍後重新整理。');
+      return;
+    }
+    const url = sources[index++];
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = function () {
+      if (!window.THREE) {
+        loadNext();
+        return;
+      }
+      const app = document.createElement('script');
+      app.src = 'main.js?v=safari-fix';
+      app.onload = function () {
+        setTimeout(function () {
+          const canvas = document.querySelector('#stage canvas');
+          if (!canvas) showError('3D 引擎已下載，但畫面建立失敗。請截圖回報。');
+        }, 1500);
+      };
+      app.onerror = function () { showError('遊戲程式 main.js 載入失敗。'); };
+      document.body.appendChild(app);
+    };
+    script.onerror = loadNext;
+    document.head.appendChild(script);
+  }
+  loadNext();
+})();
+</script>
 </body></html>
